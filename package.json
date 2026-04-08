@@ -9,8 +9,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview",
-    "validate-examples": "node scripts/validate-example.mjs"
+    "preview": "npm run build && wrangler dev",
+    "validate-examples": "node scripts/validate-example.mjs",
+    "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "@fontsource/ibm-plex-sans": "^5.2.5",
@@ -30,6 +31,7 @@
     "tailwind-merge": "^3.2.0"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.31.1",
     "@eslint/js": "^9.22.0",
     "@tailwindcss/vite": "^4.1.4",
     "@types/node": "^22.14.1",
@@ -43,6 +45,7 @@
     "tailwindcss": "^4.1.4",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.26.1",
-    "vite": "^6.2.2"
+    "vite": "^6.2.2",
+    "wrangler": "^4.81.0"
   }
 }
