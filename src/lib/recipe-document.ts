@@ -228,6 +228,16 @@ export function defaultOvenTimeMeasurement(): Record<string, unknown> {
   };
 }
 
+/** `DurationMeasurement` in the schema: `quantity_kind` is always `duration`. */
+export function defaultDurationMeasurement(): Record<string, unknown> {
+  return {
+    amount: 0,
+    unit: "min",
+    quantity_kind: "duration",
+    unit_system: "metric",
+  };
+}
+
 const OVEN_FAN_VALUES = ["Off", "Low", "High"] as const;
 
 export function parseOvenFan(v: unknown): (typeof OVEN_FAN_VALUES)[number] | "" {

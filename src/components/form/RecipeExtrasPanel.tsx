@@ -1,5 +1,6 @@
 import { CollapsibleSection } from "@/components/form/CollapsibleSection";
 import { MeasurementFieldset } from "@/components/form/MeasurementFieldset";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -11,9 +12,15 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  DURATION_MEASUREMENT_KINDS,
+  SKILL_LEVELS,
+} from "@/components/form/constants";
+import { MEAL_TYPES, normalizeMealTypeArray } from "@/lib/meal-type";
+import {
   applyVendorExtensionJson,
   asStringArray,
   buildSourceBook,
+  defaultDurationMeasurement,
   defaultOvenTemperatureMeasurement,
   defaultOvenTimeMeasurement,
   isJsonObject,
@@ -24,16 +31,30 @@ import {
 import {
   BookOpen,
   Braces,
+  Clock,
   Code,
   Fingerprint,
   Flame,
   Link as LinkIcon,
   Settings2,
+  Tags,
   Users,
 } from "lucide-react";
 import * as React from "react";
 
 const FAN_NONE = "__none__";
+const SKILL_NONE = "__none__";
+
+function nonEmptyStringArray(v: unknown): string[] {
+  return asStringArray(v).map((s) => s.trim()).filter(Boolean);
+}
+
+function nonEmptyLinesToArray(text: string): string[] {
+  return text
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
 
 type Props = {
   recipe: Record<string, unknown>;
@@ -93,13 +114,35 @@ export function RecipeExtrasPanel({
 
   const fanSelectValue = fan || FAN_NONE;
 
+  const skillLevel =
+    typeof recipe.skill_level === "string" &&
+    (SKILL_LEVELS as readonly string[]).includes(recipe.skill_level)
+      ? recipe.skill_level
+      : "";
+  const skillSelectValue = skillLevel || SKILL_NONE;
+
   const vendorKeysCount = Object.keys(
     splitVendorExtensionKeys(extras).vendor
   ).length;
 
+  const hasClassificationMetadata =
+    nonEmptyStringArray(recipe.categories).length > 0 ||
+    nonEmptyStringArray(recipe.cor).length > 0 ||
+    nonEmptyStringArray(recipe.cuisine).length > 0 ||
+    nonEmptyStringArray(recipe.tags).length > 0 ||
+    nonEmptyStringArray(recipe.dietary).length > 0 ||
+    nonEmptyStringArray(recipe.allergens).length > 0 ||
+    normalizeMealTypeArray(recipe.meal_type).length > 0 ||
+    nonEmptyStringArray(recipe.equipment).length > 0 ||
+    Boolean(skillLevel) ||
+    isJsonObject(recipe.prep_time) ||
+    isJsonObject(recipe.cook_time) ||
+    isJsonObject(recipe.total_time);
+
   const outerSummary = React.useMemo(() => {
     const bits: string[] = [];
     if (uuid.trim()) bits.push("UUID");
+    if (hasClassificationMetadata) bits.push("Classification");
     if (fan || isJsonObject(recipe.oven_temp) || isJsonObject(recipe.oven_time))
       bits.push("Oven");
     if (
@@ -112,6 +155,7 @@ export function RecipeExtrasPanel({
     return bits.length ? bits.join(" · ") : "Optional metadata";
   }, [
     uuid,
+    hasClassificationMetadata,
     fan,
     recipe.oven_temp,
     recipe.oven_time,
@@ -147,6 +191,8 @@ export function RecipeExtrasPanel({
     onExtrasChange({ source_book: built ?? undefined });
   };
 
+  const mealTypeSelected = new Set(normalizeMealTypeArray(recipe.meal_type));
+
   return (
     <CollapsibleSection
       id="recipe-more-fields"
@@ -180,6 +226,352 @@ export function RecipeExtrasPanel({
             <p className="text-xs text-[var(--color-muted)]">
               If empty, a new UUID is written when you save.
             </p>
+          </div>
+        </CollapsibleSection>
+
+        <CollapsibleSection
+          id="extra-classification"
+          title="Classification & metadata"
+          icon={<Tags />}
+          defaultOpen={false}
+          summary={
+            hasClassificationMetadata ? "Set" : "Not set"
+          }
+        >
+          <div className="space-y-5">
+            <p className="text-xs leading-relaxed text-[var(--color-muted)]">
+              Optional Open Recipe Standard metadata: tags, times as metric
+              duration, and fixed meal-type values.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label htmlFor="meta-categories">Categories</Label>
+                <p className="text-[11px] text-[var(--color-muted)]">
+                  One per line
+                </p>
+                <Textarea
+                  id="meta-categories"
+                  value={nonEmptyStringArray(recipe.categories).join("\n")}
+                  onChange={(e) =>
+                    onExtrasChange({
+                      categories: nonEmptyLinesToArray(e.target.value),
+                    })
+                  }
+                  placeholder="sweet"
+                  rows={2}
+                  className="min-h-0 resize-y font-mono text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="meta-cor">Country of recipe (cor)</Label>
+                <p className="text-[11px] text-[var(--color-muted)]">
+                  One per line
+                </p>
+                <Textarea
+                  id="meta-cor"
+                  value={nonEmptyStringArray(recipe.cor).join("\n")}
+                  onChange={(e) =>
+                    onExtrasChange({
+                      cor: nonEmptyLinesToArray(e.target.value),
+                    })
+                  }
+                  placeholder="United States"
+                  rows={2}
+                  className="min-h-0 resize-y font-mono text-xs"
+                />
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label htmlFor="meta-cuisine">Cuisine</Label>
+                <p className="text-[11px] text-[var(--color-muted)]">
+                  One per line
+                </p>
+                <Textarea
+                  id="meta-cuisine"
+                  value={nonEmptyStringArray(recipe.cuisine).join("\n")}
+                  onChange={(e) =>
+                    onExtrasChange({
+                      cuisine: nonEmptyLinesToArray(e.target.value),
+                    })
+                  }
+                  placeholder="American"
+                  rows={2}
+                  className="min-h-0 resize-y font-mono text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="meta-tags">Tags</Label>
+                <p className="text-[11px] text-[var(--color-muted)]">
+                  One per line
+                </p>
+                <Textarea
+                  id="meta-tags"
+                  value={nonEmptyStringArray(recipe.tags).join("\n")}
+                  onChange={(e) =>
+                    onExtrasChange({
+                      tags: nonEmptyLinesToArray(e.target.value),
+                    })
+                  }
+                  placeholder="chocolate"
+                  rows={2}
+                  className="min-h-0 resize-y font-mono text-xs"
+                />
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label htmlFor="meta-dietary">Dietary</Label>
+                <p className="text-[11px] text-[var(--color-muted)]">
+                  One per line
+                </p>
+                <Textarea
+                  id="meta-dietary"
+                  value={nonEmptyStringArray(recipe.dietary).join("\n")}
+                  onChange={(e) =>
+                    onExtrasChange({
+                      dietary: nonEmptyLinesToArray(e.target.value),
+                    })
+                  }
+                  placeholder="vegetarian"
+                  rows={2}
+                  className="min-h-0 resize-y font-mono text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="meta-allergens">Allergens</Label>
+                <p className="text-[11px] text-[var(--color-muted)]">
+                  One per line
+                </p>
+                <Textarea
+                  id="meta-allergens"
+                  value={nonEmptyStringArray(recipe.allergens).join("\n")}
+                  onChange={(e) =>
+                    onExtrasChange({
+                      allergens: nonEmptyLinesToArray(e.target.value),
+                    })
+                  }
+                  placeholder="milk"
+                  rows={2}
+                  className="min-h-0 resize-y font-mono text-xs"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label id="meta-meal-type-label">Meal type</Label>
+              <p className="text-[11px] text-[var(--color-muted)]">
+                Choose any that apply.
+              </p>
+              <div
+                className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5 rounded-md border border-[var(--color-border)]/80 bg-stone-50/40 p-3"
+                role="group"
+                aria-labelledby="meta-meal-type-label"
+              >
+                {MEAL_TYPES.map((mt) => (
+                  <label
+                    key={mt}
+                    className="flex cursor-pointer items-center gap-2 text-sm text-[var(--color-ink)]"
+                  >
+                    <input
+                      type="checkbox"
+                      className="size-4 shrink-0 rounded border border-[var(--color-border)] bg-[var(--color-canvas)] text-[var(--color-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
+                      checked={mealTypeSelected.has(mt)}
+                      onChange={() => {
+                        const next = new Set(mealTypeSelected);
+                        if (next.has(mt)) next.delete(mt);
+                        else next.add(mt);
+                        const arr = MEAL_TYPES.filter((m) => next.has(m));
+                        onExtrasChange({
+                          meal_type: arr.length ? arr : undefined,
+                        });
+                      }}
+                    />
+                    <span className="capitalize">{mt}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-2">
+              <div className="space-y-1">
+                <Label htmlFor="meta-equipment">Equipment</Label>
+                <p className="text-[11px] text-[var(--color-muted)]">
+                  One per line
+                </p>
+                <Textarea
+                  id="meta-equipment"
+                  value={nonEmptyStringArray(recipe.equipment).join("\n")}
+                  onChange={(e) =>
+                    onExtrasChange({
+                      equipment: nonEmptyLinesToArray(e.target.value),
+                    })
+                  }
+                  placeholder="oven"
+                  rows={3}
+                  className="min-h-0 resize-y font-mono text-xs"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="meta-skill-level">Skill level</Label>
+                <p className="text-[11px] text-[var(--color-muted)]">
+                  Optional difficulty
+                </p>
+                <Select
+                  value={skillSelectValue}
+                  onValueChange={(v) => {
+                    if (v === SKILL_NONE) {
+                      onExtrasChange({ skill_level: undefined });
+                    } else {
+                      onExtrasChange({ skill_level: v });
+                    }
+                  }}
+                >
+                  <SelectTrigger id="meta-skill-level" className="w-full">
+                    <SelectValue placeholder="Not set" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={SKILL_NONE}>Not set</SelectItem>
+                    {SKILL_LEVELS.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-3 border-t border-[var(--color-border)] pt-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <Clock className="size-4 shrink-0 text-[var(--color-muted)]" aria-hidden />
+                <span className="text-sm font-medium text-[var(--color-ink)]">
+                  Times
+                </span>
+                <span className="text-xs text-[var(--color-muted)]">
+                  Prep, cook, and total — metric duration only (min, s, h).
+                </span>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="flex min-w-0 flex-col gap-2 rounded-lg border border-[var(--color-border)]/90 bg-stone-50/30 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-[var(--color-ink)]">
+                      Prep time
+                    </span>
+                    {isJsonObject(recipe.prep_time) ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 shrink-0 px-2 text-xs text-[var(--color-muted)]"
+                        onClick={() => onExtrasChange({ prep_time: undefined })}
+                      >
+                        Clear
+                      </Button>
+                    ) : null}
+                  </div>
+                  {isJsonObject(recipe.prep_time) ? (
+                    <MeasurementFieldset
+                      value={recipe.prep_time}
+                      onChange={(m) => onExtrasChange({ prep_time: m })}
+                      quantityKindOptions={DURATION_MEASUREMENT_KINDS}
+                    />
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      onClick={() =>
+                        onExtrasChange({
+                          prep_time: defaultDurationMeasurement(),
+                        })
+                      }
+                    >
+                      Add prep time
+                    </Button>
+                  )}
+                </div>
+                <div className="flex min-w-0 flex-col gap-2 rounded-lg border border-[var(--color-border)]/90 bg-stone-50/30 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-[var(--color-ink)]">
+                      Cook time
+                    </span>
+                    {isJsonObject(recipe.cook_time) ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 shrink-0 px-2 text-xs text-[var(--color-muted)]"
+                        onClick={() => onExtrasChange({ cook_time: undefined })}
+                      >
+                        Clear
+                      </Button>
+                    ) : null}
+                  </div>
+                  {isJsonObject(recipe.cook_time) ? (
+                    <MeasurementFieldset
+                      value={recipe.cook_time}
+                      onChange={(m) => onExtrasChange({ cook_time: m })}
+                      quantityKindOptions={DURATION_MEASUREMENT_KINDS}
+                    />
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      onClick={() =>
+                        onExtrasChange({
+                          cook_time: defaultDurationMeasurement(),
+                        })
+                      }
+                    >
+                      Add cook time
+                    </Button>
+                  )}
+                </div>
+                <div className="flex min-w-0 flex-col gap-2 rounded-lg border border-[var(--color-border)]/90 bg-stone-50/30 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-[var(--color-ink)]">
+                      Total time
+                    </span>
+                    {isJsonObject(recipe.total_time) ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 shrink-0 px-2 text-xs text-[var(--color-muted)]"
+                        onClick={() => onExtrasChange({ total_time: undefined })}
+                      >
+                        Clear
+                      </Button>
+                    ) : null}
+                  </div>
+                  {isJsonObject(recipe.total_time) ? (
+                    <MeasurementFieldset
+                      value={recipe.total_time}
+                      onChange={(m) => onExtrasChange({ total_time: m })}
+                      quantityKindOptions={DURATION_MEASUREMENT_KINDS}
+                    />
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      onClick={() =>
+                        onExtrasChange({
+                          total_time: defaultDurationMeasurement(),
+                        })
+                      }
+                    >
+                      Add total time
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </CollapsibleSection>
 

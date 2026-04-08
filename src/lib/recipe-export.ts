@@ -1,3 +1,4 @@
+import { normalizeMealTypeArray } from "@/lib/meal-type";
 import {
   asIngredientArray,
   asStepArray,
@@ -52,6 +53,15 @@ export function migrateLegacyRecipeShape(
   data: Record<string, unknown>
 ): Record<string, unknown> {
   const out: Record<string, unknown> = { ...data };
+  if (!("meal_type" in out) && "occasions" in out) {
+    out.meal_type = out.occasions;
+    delete out.occasions;
+  }
+  if ("meal_type" in out) {
+    const n = normalizeMealTypeArray(out.meal_type);
+    if (n.length === 0) delete out.meal_type;
+    else out.meal_type = n;
+  }
   if (!("base_yield" in out) && "yields" in out) {
     const y = out.yields;
     if (Array.isArray(y) && y.length > 0 && isJsonObject(y[0])) {
@@ -64,7 +74,13 @@ export function migrateLegacyRecipeShape(
     out.base_yield = normalizeYieldMeasurement(out.base_yield);
   }
 
-  for (const key of ["oven_temp", "oven_time"] as const) {
+  for (const key of [
+    "oven_temp",
+    "oven_time",
+    "prep_time",
+    "cook_time",
+    "total_time",
+  ] as const) {
     const v = out[key];
     if (isJsonObject(v)) {
       out[key] = normalizeMeasurementMetric(v);

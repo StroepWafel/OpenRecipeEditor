@@ -15,7 +15,11 @@ import {
   mergeRecipeForModel,
   splitRecipeForEditor,
 } from "@/lib/recipe-export";
-import { readJsonFile, saveRecipeJson } from "@/lib/recipe-files";
+import {
+  readJsonFile,
+  recipeFilenameFromRecipeName,
+  saveRecipeJson,
+} from "@/lib/recipe-files";
 import {
   asObject,
   emptyRecipe,
@@ -241,7 +245,9 @@ export default function App() {
     const out = finalizeRecipeForExport(recipe, { schemaId });
     runValidate(out);
     if (!validator(out)) return false;
-    await saveRecipeJson(out, "recipe.json");
+    const recipeName =
+      typeof recipe.recipe_name === "string" ? recipe.recipe_name : "";
+    await saveRecipeJson(out, recipeFilenameFromRecipeName(recipeName));
     setBaselineFingerprint(JSON.stringify(recipe));
     return true;
   }, [recipe, validator, runValidate, schemaId]);

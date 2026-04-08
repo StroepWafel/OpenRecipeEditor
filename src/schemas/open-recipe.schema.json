@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://food-for-eating.com/schema/open-recipe.schema.json",
   "title": "Open Recipe Standard",
-  "$comment": "Normative JSON Schema for the Open Recipe Standard: a portable, vendor-neutral format for encoding recipes for interchange between applications and libraries. All measurements use SI / metric units only (unit_system is always metric). For ingredient amounts, unit follows the allowlist for each quantity_kind except count: when quantity_kind is count, unit is any non-empty label (e.g. cookies, egg rolls). For mass or volume, unit is a fixed metric code (mg, g, kg or ml, cl, L). base_yield may be count, mass, or volume. Provisional or vendor-specific fields use keys matching ^X-.",
+  "$comment": "Normative JSON Schema for the Open Recipe Standard: a portable, vendor-neutral format for encoding recipes for interchange between applications and libraries. All measurements use SI / metric units only (unit_system is always metric). Optional metadata includes categories, cor, cuisine, tags, dietary/allergen hints, skill level, meal type, equipment, and active/prep/total times. For ingredient amounts, unit follows the allowlist for each quantity_kind. For base_yield when quantity_kind is count, unit is a free-form label. Provisional fields use keys matching ^X-.",
   "type": "object",
   "required": ["recipe_name"],
   "properties": {
@@ -17,6 +17,83 @@
     "notes": {
       "$ref": "#/$defs/NotesList",
       "description": "Recipe-level notes."
+    },
+    "categories": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "High-level categorical tags for filtering and UI. Examples: taste (sweet, savoury, spicy, mild, umami); course (appetizer, starter, mains, side, dessert, snack); meal time (breakfast, brunch, lunch, dinner); style (comfort_food, kid_friendly, quick, make_ahead, one_pot, baked, grilled, fried, steamed, raw). Open vocabulary; keep spelling consistent in a dataset."
+    },
+    "cor": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Country of recipe (COR): countries or regions associated with the dish’s origin or style (e.g. France, Italy, Australia, China). Use display names or ISO 3166 codes; stay consistent within a dataset."
+    },
+    "cuisine": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Culinary tradition or style (often broader than cor), e.g. Italian, Mexican, Japanese, Middle Eastern, Nordic, Southern US. Open vocabulary."
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Search and discovery keywords: ingredients, techniques, themes (e.g. chocolate, summer, gluten-free-baking). Complements categories."
+    },
+    "dietary": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Dietary suitability labels, e.g. vegetarian, vegan, pescatarian, halal, kosher, gluten-free, dairy-free, nut-free, low-sodium, keto, paleo. Open vocabulary; not a substitute for allergen declarations."
+    },
+    "allergens": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Allergens present in the recipe (for consumer safety). Use consistent tokens in a dataset, e.g. milk, eggs, fish, crustaceans, molluscs, tree_nuts, peanuts, wheat, soy, sesame, mustard, lupin, celery, sulphites (align with local labeling rules as needed)."
+    },
+    "skill_level": {
+      "$ref": "#/$defs/SkillLevel",
+      "description": "Approximate difficulty for a typical home cook."
+    },
+    "meal_type": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/MealType" },
+      "description": "One or more meal or eating contexts, each chosen from the fixed MealType list."
+    },
+    "prep_time": {
+      "$ref": "#/$defs/DurationMeasurement",
+      "description": "Active preparation time (chopping, mixing) before cooking; quantity_kind duration."
+    },
+    "cook_time": {
+      "$ref": "#/$defs/DurationMeasurement",
+      "description": "Cooking or baking time (stove, oven, grill); quantity_kind duration."
+    },
+    "total_time": {
+      "$ref": "#/$defs/DurationMeasurement",
+      "description": "End-to-end time including prep, cook, and mandatory passive steps (rest, chill) if the author includes them; quantity_kind duration."
+    },
+    "equipment": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Tools or appliances assumed, e.g. oven, microwave, refrigerator, stand mixer, food processor, immersion blender, grill, wok."
     },
     "base_yield": {
       "$ref": "#/$defs/YieldMeasurement",
@@ -85,6 +162,27 @@
       "type": "array",
       "items": { "type": "string" }
     },
+    "SkillLevel": {
+      "type": "string",
+      "enum": ["beginner", "intermediate", "advanced"],
+      "description": "Relative difficulty for a typical home cook."
+    },
+    "MealType": {
+      "type": "string",
+      "enum": [
+        "breakfast",
+        "brunch",
+        "lunch",
+        "dinner",
+        "supper",
+        "snack",
+        "dessert",
+        "tea",
+        "appetizer",
+        "side"
+      ],
+      "description": "Meal or eating context: main mealtimes, snack/dessert, tea, first course, or side dish."
+    },
     "QuantityKind": {
       "type": "string",
       "enum": ["mass", "volume", "count", "temperature", "duration"],
@@ -97,7 +195,7 @@
     },
     "Measurement": {
       "type": "object",
-      "description": "A quantity with unit_system \"metric\". For mass, volume, temperature, and duration, unit is a fixed code (see allOf). For count, unit is any non-empty human-readable label for what is counted.",
+      "description": "A metric quantity: unit_system must be \"metric\". Field unit must be a standard code for quantity_kind (see allOf).",
       "required": ["amount", "unit", "quantity_kind", "unit_system"],
       "properties": {
         "amount": {
@@ -106,7 +204,7 @@
         },
         "unit": {
           "type": "string",
-          "description": "Fixed unit code for mass, volume, temperature, or duration; for count, any non-empty label (see allOf)."
+          "description": "Standard metric unit code for this quantity_kind (see allOf allowlists)."
         },
         "quantity_kind": { "$ref": "#/$defs/QuantityKind" },
         "unit_system": { "$ref": "#/$defs/UnitSystem" }
@@ -146,9 +244,26 @@
             "type": "object",
             "properties": {
               "unit": {
-                "type": "string",
-                "minLength": 1,
-                "description": "Human-readable name for what is counted (plural is fine), not limited to a fixed vocabulary."
+                "enum": [
+                  "each",
+                  "dozen",
+                  "serving",
+                  "servings",
+                  "portion",
+                  "portions",
+                  "cookie",
+                  "cookies",
+                  "slice",
+                  "slices",
+                  "egg",
+                  "eggs",
+                  "batch",
+                  "batches",
+                  "loaf",
+                  "loaves",
+                  "muffin",
+                  "muffins"
+                ]
               }
             }
           }
@@ -179,19 +294,58 @@
         }
       ]
     },
-    "YieldMeasurement": {
-      "description": "How much recipe output the written amounts represent: count, mass, or volume only. For count, unit is a free-form label (what is being counted). For mass or volume, unit uses the same fixed metric codes as Measurement.",
+    "DurationMeasurement": {
+      "description": "A duration-only measurement for prep, cook, or total time. Uses quantity_kind duration and units ms, s, min, or h.",
       "allOf": [
         { "$ref": "#/$defs/Measurement" },
         {
           "type": "object",
           "properties": {
-            "quantity_kind": {
-              "type": "string",
-              "enum": ["count", "mass", "volume"],
-              "description": "Measure output as a number of items (count), total mass, or total volume."
-            }
+            "quantity_kind": { "const": "duration" }
           }
+        }
+      ]
+    },
+    "YieldMeasurement": {
+      "description": "How much recipe output the written amounts represent: count, mass, or volume only. For count, unit is a free-form label (what is being counted). For mass or volume, unit uses the same fixed metric codes as Measurement.",
+      "oneOf": [
+        {
+          "type": "object",
+          "description": "Output counted in discrete units; unit is any non-empty custom label (e.g. cookies, egg rolls, slices).",
+          "required": ["amount", "unit", "quantity_kind", "unit_system"],
+          "properties": {
+            "amount": {
+              "type": "number",
+              "description": "How many of the thing named by unit (e.g. 24 when unit is cookies)."
+            },
+            "unit": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Human-readable name for one counted item or batch (plural is fine), not limited to a fixed vocabulary."
+            },
+            "quantity_kind": { "const": "count" },
+            "unit_system": { "$ref": "#/$defs/UnitSystem" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "description": "Output as total mass or volume using standard metric units.",
+          "required": ["amount", "unit", "quantity_kind", "unit_system"],
+          "allOf": [
+            { "$ref": "#/$defs/Measurement" },
+            {
+              "type": "object",
+              "properties": {
+                "quantity_kind": {
+                  "type": "string",
+                  "enum": ["mass", "volume"],
+                  "description": "Total mass or total volume of the recipe output."
+                }
+              }
+            }
+          ],
+          "additionalProperties": false
         }
       ]
     },
