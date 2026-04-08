@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://openrecipestandard.org/schema/open-recipe.schema.json",
+  "title": "Open Recipe Standard",
+  "$comment": "Normative JSON Schema for the Open Recipe Standard: a portable, vendor-neutral format for encoding recipes for interchange between applications and libraries. Each ingredient is an object with a required name field. Measurements use quantity_kind and unit_system for unambiguous conversion. Ingredient amount fields are written for base_yield; scaling to other batch sizes is done by multiplying every ingredient amount (and comparing yields in the same quantity_kind/unit) by a scale factor. Provisional or vendor-specific fields use keys matching ^X-.",
+  "type": "object",
+  "required": ["recipe_name"],
+  "properties": {
+    "recipe_name": {
+      "type": "string",
+      "description": "Name of this recipe."
+    },
+    "recipe_uuid": {
+      "type": "string",
+      "description": "Stable identifier (e.g. vendor prefix + unique id) for this recipe instance."
+    },
+    "notes": {
+      "$ref": "#/$defs/NotesList",
+      "description": "Recipe-level notes."
+    },
+    "base_yield": {
+      "$ref": "#/$defs/Measurement",
+      "description": "What the written ingredient amounts produce (e.g. 24 cookies, 6 servings). To scale: multiply each ingredient amount by (target_yield_amount / base_yield.amount) when both are in the same unit and quantity_kind, or by an explicit scale factor chosen by the user."
+    },
+    "ingredients": {
+      "type": "array",
+      "description": "Ingredients in order of use; repeat lines when used at different stages. Each amount is for base_yield unless scaled at display time.",
+      "items": { "$ref": "#/$defs/Ingredient" }
+    },
+    "steps": {
+      "type": "array",
+      "description": "Ordered preparation steps.",
+      "items": { "$ref": "#/$defs/Step" }
+    },
+    "oven_fan": {
+      "type": "string",
+      "enum": ["Off", "Low", "High"],
+      "description": "Convection setting; if omitted, implementations may treat as Off."
+    },
+    "oven_temp": {
+      "$ref": "#/$defs/Measurement",
+      "description": "Starting oven temperature; use quantity_kind temperature."
+    },
+    "oven_time": {
+      "$ref": "#/$defs/Measurement",
+      "description": "Overall oven duration; use quantity_kind duration."
+    },
+    "source_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL this recipe was taken from, if applicable."
+    },
+    "source_authors": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Original author(s) of the recipe, not the person who entered it."
+    },
+    "source_book": { "$ref": "#/$defs/SourceBook" }
+  },
+  "patternProperties": {
+    "^X-": true
+  },
+  "additionalProperties": true,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "ingredients": {
+            "type": "array",
+            "minItems": 1
+          }
+        },
+        "required": ["ingredients"]
+      },
+      "then": {
+        "properties": {
+          "base_yield": { "$ref": "#/$defs/Measurement" }
+        },
+        "required": ["base_yield"]
+      }
+    }
+  ],
+  "$defs": {
+    "NotesList": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "QuantityKind": {
+      "type": "string",
+      "enum": ["mass", "volume", "count", "temperature", "duration"],
+      "description": "mass vs volume vs count; temperature/duration for oven fields. Volume (cup, tsp) is never mass."
+    },
+    "UnitSystem": {
+      "type": "string",
+      "enum": ["metric", "us_customary", "imperial", "unspecified"],
+      "description": "Disambiguates US cup vs metric cup, mass oz vs fl oz, etc."
+    },
+    "Measurement": {
+      "type": "object",
+      "description": "A quantity with explicit kind and system for safe conversion.",
+      "required": ["amount", "unit", "quantity_kind", "unit_system"],
+      "properties": {
+        "amount": {
+          "type": "number",
+          "description": "Numeric amount in the given unit."
+        },
+        "unit": {
+          "type": "string",
+          "description": "Unit code (e.g. g, ml, cup, tsp, each, C, F, minutes)."
+        },
+        "quantity_kind": { "$ref": "#/$defs/QuantityKind" },
+        "unit_system": { "$ref": "#/$defs/UnitSystem" }
+      },
+      "additionalProperties": false
+    },
+    "IngredientSansSubstitutions": {
+      "type": "object",
+      "description": "Ingredient line without nested substitutions (used inside substitutions arrays).",
+      "required": ["name", "amount"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Human-readable ingredient name."
+        },
+        "amount": {
+          "$ref": "#/$defs/Measurement",
+          "description": "Amount for base_yield; scale with the recipe when changing batch size."
+        },
+        "processing": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Tags like whole, minced, large dice."
+        },
+        "notes": { "$ref": "#/$defs/NotesList" },
+        "usda_num": {
+          "type": "string",
+          "description": "USDA Standard Reference index key for nutrition lookup."
+        }
+      },
+      "additionalProperties": false
+    },
+    "Ingredient": {
+      "type": "object",
+      "description": "Full ingredient line including optional substitutions.",
+      "required": ["name", "amount"],
+      "properties": {
+        "name": { "type": "string" },
+        "amount": { "$ref": "#/$defs/Measurement" },
+        "processing": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "notes": { "$ref": "#/$defs/NotesList" },
+        "usda_num": { "type": "string" },
+        "substitutions": {
+          "type": "array",
+          "description": "Same shape as an ingredient but without substitutions on nested items.",
+          "items": { "$ref": "#/$defs/IngredientSansSubstitutions" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "Haccp": {
+      "description": "HACCP annotation: either control_point or critical_control_point, not both.",
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["control_point"],
+          "properties": {
+            "control_point": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["critical_control_point"],
+          "properties": {
+            "critical_control_point": { "type": "string" }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Step": {
+      "type": "object",
+      "required": ["step"],
+      "properties": {
+        "step": {
+          "type": "string",
+          "description": "Instruction text for this step."
+        },
+        "notes": { "$ref": "#/$defs/NotesList" },
+        "haccp": { "$ref": "#/$defs/Haccp" }
+      },
+      "additionalProperties": false
+    },
+    "SourceBook": {
+      "type": "object",
+      "properties": {
+        "authors": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Book author(s)."
+        },
+        "title": { "type": "string" },
+        "isbn": { "type": "string" },
+        "notes": { "$ref": "#/$defs/NotesList" }
+      },
+      "patternProperties": {
+        "^X-": true
+      },
+      "additionalProperties": true
+    }
+  }
+}

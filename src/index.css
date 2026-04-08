@@ -1,0 +1,28 @@
+@import "tailwindcss";
+@import "@fontsource/ibm-plex-sans/400.css";
+@import "@fontsource/ibm-plex-sans/500.css";
+@import "@fontsource/ibm-plex-sans/600.css";
+
+@theme {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-canvas: #f4f1eb;
+  --color-ink: #1c1917;
+  --color-muted: #57534e;
+  --color-border: #d6d3cd;
+  --color-accent: #b45309;
+  --color-accent-soft: #fff7ed;
+  --radius-card: 0.5rem;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100vh;
+}
