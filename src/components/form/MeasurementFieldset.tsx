@@ -13,7 +13,10 @@ import {
   resolveMeasurementUnit,
   unitsForQuantityKind,
 } from "@/lib/measurement-units";
-import { parseAmountFromInput } from "@/lib/parse-amount-input";
+import {
+  filterDecimalAmountInput,
+  parseAmountFromInput,
+} from "@/lib/parse-amount-input";
 import { isJsonObject } from "@/lib/recipe-document";
 import { defaultMeasurement } from "@/lib/recipe-document";
 import { QUANTITY_KINDS, UNIT_SYSTEMS } from "./constants";
@@ -100,6 +103,21 @@ export function MeasurementFieldset({
     }
   }, [isVolume, us, patch]);
 
+  /** While focused, keep a string draft so clearing the field does not immediately commit `0` (avoids "05" when typing after clear). */
+  const [amountDraft, setAmountDraft] = React.useState<string | null>(null);
+  const amountDraftRef = React.useRef("");
+
+  const amountDisplay =
+    amountDraft !== null
+      ? amountDraft
+      : String(Number.isFinite(amount) ? amount : 0);
+
+  const commitAmountDraft = React.useCallback(() => {
+    const raw = amountDraftRef.current;
+    setAmountDraft(null);
+    patch({ amount: parseAmountFromInput(raw) });
+  }, [patch]);
+
   return (
     <div className="grid w-full min-w-0 gap-3 rounded-md border border-[var(--color-border)]/80 bg-stone-50/50 p-3 sm:grid-cols-2 xl:grid-cols-3">
       {label ? (
@@ -111,12 +129,24 @@ export function MeasurementFieldset({
         <Label htmlFor={`${uid}-amt`}>Amount</Label>
         <Input
           id={`${uid}-amt`}
-          type="number"
-          step="any"
-          value={Number.isFinite(amount) ? amount : 0}
-          onChange={(e) =>
-            patch({ amount: parseAmountFromInput(e.target.value) })
-          }
+          type="text"
+          inputMode="decimal"
+          autoComplete="off"
+          value={amountDisplay}
+          onFocus={() => {
+            const a = Number.isFinite(amount) ? amount : 0;
+            const s = a === 0 ? "" : String(a);
+            amountDraftRef.current = s;
+            setAmountDraft(s);
+          }}
+          onChange={(e) => {
+            const raw = filterDecimalAmountInput(e.target.value);
+            amountDraftRef.current = raw;
+            setAmountDraft(raw);
+          }}
+          onBlur={() => {
+            commitAmountDraft();
+          }}
         />
       </div>
       <div className="space-y-1.5">

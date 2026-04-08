@@ -227,11 +227,12 @@ export function RecipeForm({
               when collapsed.
             </p>
           </div>
-          <div className="flex flex-col items-end gap-1">
+          <div className="flex flex-col gap-1 self-end min-w-[12rem]">
             <Button
               type="button"
               variant="ghost"
               size="sm"
+              className="w-full justify-start"
               disabled={ingredients.length === 0}
               onClick={() => setIngredientCollapseAll((n) => n + 1)}
             >
@@ -242,6 +243,7 @@ export function RecipeForm({
               type="button"
               variant="ghost"
               size="sm"
+              className="w-full justify-start"
               disabled={ingredients.length === 0}
               onClick={() => setIngredientExpandAll((n) => n + 1)}
             >
@@ -287,11 +289,12 @@ export function RecipeForm({
               expand.
             </p>
           </div>
-          <div className="flex flex-col items-end gap-1">
+          <div className="flex flex-col gap-1 self-end min-w-[12rem]">
             <Button
               type="button"
               variant="ghost"
               size="sm"
+              className="w-full justify-start"
               disabled={stepRows.length === 0}
               onClick={() => setStepCollapseAll((n) => n + 1)}
             >
@@ -302,6 +305,7 @@ export function RecipeForm({
               type="button"
               variant="ghost"
               size="sm"
+              className="w-full justify-start"
               disabled={stepRows.length === 0}
               onClick={() => setStepExpandAll((n) => n + 1)}
             >
