@@ -17,3 +17,9 @@ export const OVEN_FAN = ["Off", "Low", "High"] as const;
 export const DURATION_MEASUREMENT_KINDS = ["duration"] as const;
 
 export const SKILL_LEVELS = ["beginner", "intermediate", "advanced"] as const;
+
+/**
+ * When a list has more than this many rows, the **top** rows (lowest indices) auto-collapse
+ * first so the **last** this many rows stay expanded unless the user opens a collapsed row.
+ */
+export const LIST_AUTO_COLLAPSE_THRESHOLD = 5;

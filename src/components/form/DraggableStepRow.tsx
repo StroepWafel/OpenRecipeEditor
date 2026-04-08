@@ -15,6 +15,7 @@ const springDrag = {
 type Props = {
   row: StepRow;
   index: number;
+  totalSteps: number;
   onStepChange: (id: string, next: Record<string, unknown>) => void;
   onRemove: (id: string) => void;
   collapseAllSignal?: number;
@@ -28,6 +29,7 @@ type Props = {
 export function DraggableStepRow({
   row,
   index,
+  totalSteps,
   onStepChange,
   onRemove,
   collapseAllSignal = 0,
@@ -66,6 +68,7 @@ export function DraggableStepRow({
         <div className="min-w-0 flex-1">
           <StepEditor
             index={index}
+            totalSteps={totalSteps}
             value={row.data}
             onChange={(next) => onStepChange(row.id, next)}
             onRemove={() => onRemove(row.id)}

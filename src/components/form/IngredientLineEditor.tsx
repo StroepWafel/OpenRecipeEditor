@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import * as React from "react";
 import { MeasurementFieldset } from "./MeasurementFieldset";
+import { useCollapsibleListRow } from "./useCollapsibleListRow";
 
 type Props = {
   value: Record<string, unknown>;
@@ -20,6 +21,10 @@ type Props = {
   onRemove?: () => void;
   title: string;
   allowSubstitutions: boolean;
+  /** 0-based index among siblings (ingredients or substitutions). */
+  rowIndex: number;
+  /** Total rows at this list level (ingredients.length or subs.length). */
+  siblingCount: number;
   /** Increment from parent to collapse this row (and pass through to nested lines). */
   collapseAllSignal?: number;
   /** Increment from parent to expand this row (and pass through to nested lines). */
@@ -50,6 +55,8 @@ export function IngredientLineEditor({
   onRemove,
   title,
   allowSubstitutions,
+  rowIndex,
+  siblingCount,
   collapseAllSignal = 0,
   expandAllSignal = 0,
 }: Props) {
@@ -76,17 +83,12 @@ export function IngredientLineEditor({
     patch({ substitutions: next });
   };
 
-  const [minimized, setMinimized] = React.useState(false);
-
-  React.useEffect(() => {
-    if (collapseAllSignal === 0) return;
-    setMinimized(true);
-  }, [collapseAllSignal]);
-
-  React.useEffect(() => {
-    if (expandAllSignal === 0) return;
-    setMinimized(false);
-  }, [expandAllSignal]);
+  const { minimized, toggleRow } = useCollapsibleListRow({
+    rowIndex,
+    siblingCount,
+    collapseAllSignal,
+    expandAllSignal,
+  });
 
   return (
     <Card className="border-[var(--color-border)]">
@@ -94,7 +96,7 @@ export function IngredientLineEditor({
         <button
           type="button"
           className="flex min-w-0 flex-1 items-center gap-2 rounded-md py-1 text-left outline-none ring-offset-2 ring-offset-[var(--color-canvas)] transition-colors hover:bg-stone-100/80 focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
-          onClick={() => setMinimized((m) => !m)}
+          onClick={toggleRow}
           aria-expanded={!minimized}
           aria-label={minimized ? `Expand ${title}` : `Collapse ${title}`}
         >
@@ -231,6 +233,8 @@ export function IngredientLineEditor({
                     key={si}
                     title={`Substitution ${si + 1}`}
                     allowSubstitutions={false}
+                    rowIndex={si}
+                    siblingCount={subs.length}
                     collapseAllSignal={collapseAllSignal}
                     expandAllSignal={expandAllSignal}
                     value={sub}

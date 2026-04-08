@@ -257,6 +257,8 @@ export function RecipeForm({
             key={i}
             title={`Ingredient ${i + 1}`}
             allowSubstitutions
+            rowIndex={i}
+            siblingCount={ingredients.length}
             collapseAllSignal={ingredientCollapseAll}
             expandAllSignal={ingredientExpandAll}
             value={ing}
@@ -326,6 +328,7 @@ export function RecipeForm({
                 key={row.id}
                 row={row}
                 index={i}
+                totalSteps={stepRows.length}
                 onStepChange={updateStepData}
                 onRemove={removeStep}
                 collapseAllSignal={stepCollapseAll}

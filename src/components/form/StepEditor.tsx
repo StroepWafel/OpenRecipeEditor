@@ -11,11 +11,15 @@ import { cn } from "@/lib/utils";
 import { ChevronDown, Trash2 } from "lucide-react";
 import * as React from "react";
 
+import { useCollapsibleListRow } from "./useCollapsibleListRow";
+
 type Props = {
   value: Record<string, unknown>;
   onChange: (next: Record<string, unknown>) => void;
   onRemove: () => void;
   index: number;
+  /** Total steps in the recipe (for auto-collapse when the list is long). */
+  totalSteps: number;
   collapseAllSignal?: number;
   expandAllSignal?: number;
 };
@@ -35,6 +39,7 @@ export function StepEditor({
   onChange,
   onRemove,
   index,
+  totalSteps,
   collapseAllSignal = 0,
   expandAllSignal = 0,
 }: Props) {
@@ -47,17 +52,12 @@ export function StepEditor({
     onChange({ ...line, ...next });
   };
 
-  const [minimized, setMinimized] = React.useState(false);
-
-  React.useEffect(() => {
-    if (collapseAllSignal === 0) return;
-    setMinimized(true);
-  }, [collapseAllSignal]);
-
-  React.useEffect(() => {
-    if (expandAllSignal === 0) return;
-    setMinimized(false);
-  }, [expandAllSignal]);
+  const { minimized, toggleRow } = useCollapsibleListRow({
+    rowIndex: index,
+    siblingCount: totalSteps,
+    collapseAllSignal,
+    expandAllSignal,
+  });
 
   const preview =
     stepText.trim() || (notes.length ? notes[0] : "") || "No instruction yet";
@@ -68,7 +68,7 @@ export function StepEditor({
         <button
           type="button"
           className="flex min-w-0 flex-1 items-start gap-2 rounded-md py-1 text-left outline-none ring-offset-2 ring-offset-[var(--color-canvas)] transition-colors hover:bg-stone-100/80 focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
-          onClick={() => setMinimized((m) => !m)}
+          onClick={toggleRow}
           aria-expanded={!minimized}
           aria-label={minimized ? `Expand step ${index + 1}` : `Collapse step ${index + 1}`}
         >
