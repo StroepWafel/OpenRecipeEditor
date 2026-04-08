@@ -44,6 +44,16 @@ VITE_ORS_GITHUB_REF=main
 - Save JSON (native save dialog when supported, otherwise download) and load from disk.
 - Optional samples: minimal and complete recipes from the same Git ref / fallbacks.
 
+## Contributing recipes to the library
+
+Recipes you export from this editor can be shared in the **[Open Recipe Library](https://github.com/StroepWafel/OpenRecipeLibrary)** — a community-maintained collection of [Open Recipe Standard](https://github.com/StroepWafel/OpenRecipeStandard) JSON.
+
+1. Use **Save** here to write a valid `.json` file.
+2. Add one recipe per file under `recipes/` in a fork of [OpenRecipeLibrary](https://github.com/StroepWafel/OpenRecipeLibrary) (nested folders are fine).
+3. Open a **pull request** against the default branch.
+
+For full steps and conventions, see the library **[README / contributing section](https://github.com/StroepWafel/OpenRecipeLibrary/blob/main/README.md)**. For how files are organized on the generated `library` branch and normalization rules, see **[FILESYSTEM-LAYOUT.md](https://github.com/StroepWafel/OpenRecipeLibrary/blob/main/FILESYSTEM-LAYOUT.md)**.
+
 ## UI
 
 The layout uses a restrained palette, [IBM Plex Sans](https://github.com/IBM/plex), and a subtle grid background with light motion—aligned with a calm editorial tool rather than a generic “AI product” look. [Chamaac-style](https://www.chamaac.com/) components are represented by the same stack (Tailwind, motion, shadcn-style primitives) and a minimal grid treatment instead of heavy shader chrome.

@@ -485,22 +485,61 @@ export default function App() {
         ) : null}
       </main>
 
-      <footer className="relative z-10 border-t border-[var(--color-border)] px-4 py-6 text-center text-xs text-[var(--color-muted)] sm:px-6 lg:px-8">
-        <div className="mx-auto w-full max-w-screen-2xl">
-          {schemaText ? (
-            <span>Schema loaded ({schemaText.length.toLocaleString()} chars).</span>
-          ) : (
-            <span>Schema not loaded.</span>
-          )}{" "}
-          Open Recipe Standard — graphical editor.{" "}
-          <a
-            href="https://food-for-eating.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-[var(--color-accent)] underline-offset-2 hover:underline"
-          >
-            food-for-eating.com
-          </a>
+      <footer className="relative z-10 border-t border-[var(--color-border)] px-4 py-6 text-xs text-[var(--color-muted)] sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-4">
+          <div className="max-w-3xl text-pretty leading-relaxed sm:mx-auto sm:text-center">
+            <span className="font-medium text-[var(--color-ink)]">
+              Share with the community library.
+            </span>{" "}
+            Save your recipe as JSON, then add it under{" "}
+            <code className="rounded bg-stone-100 px-1 font-mono text-[0.7rem] text-stone-800">
+              recipes/
+            </code>{" "}
+            in the{" "}
+            <a
+              href="https://github.com/StroepWafel/OpenRecipeLibrary"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--color-accent)] underline-offset-2 hover:underline"
+            >
+              Open Recipe Library
+            </a>{" "}
+            on GitHub and open a pull request. Read the{" "}
+            <a
+              href="https://github.com/StroepWafel/OpenRecipeLibrary/blob/main/README.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--color-accent)] underline-offset-2 hover:underline"
+            >
+              contributing guide
+            </a>{" "}
+            and{" "}
+            <a
+              href="https://github.com/StroepWafel/OpenRecipeLibrary/blob/main/FILESYSTEM-LAYOUT.md"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--color-accent)] underline-offset-2 hover:underline"
+            >
+              filesystem layout
+            </a>{" "}
+            for how files are organized and normalized.
+          </div>
+          <div className="text-center">
+            {schemaText ? (
+              <span>Schema loaded ({schemaText.length.toLocaleString()} chars).</span>
+            ) : (
+              <span>Schema not loaded.</span>
+            )}{" "}
+            Open Recipe Standard — graphical editor.{" "}
+            <a
+              href="https://food-for-eating.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--color-accent)] underline-offset-2 hover:underline"
+            >
+              food-for-eating.com
+            </a>
+          </div>
         </div>
       </footer>
     </div>
