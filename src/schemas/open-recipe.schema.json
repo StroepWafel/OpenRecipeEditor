@@ -14,6 +14,14 @@
       "type": "string",
       "description": "Stable identifier (e.g. vendor prefix + unique id) for this recipe instance."
     },
+    "recipe_authors": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      },
+      "description": "Optional. People credited as creating or writing this recipe (including the author’s own name for originals). Distinct from source_authors, which names authors on an external publication."
+    },
     "notes": {
       "$ref": "#/$defs/NotesList",
       "description": "Recipe-level notes."
@@ -130,7 +138,7 @@
     "source_authors": {
       "type": "array",
       "items": { "type": "string" },
-      "description": "Original author(s) of the recipe, not the person who entered it."
+      "description": "Author(s) credited on the external source (website, book, etc.), not necessarily the person who typed the recipe into an app. May match recipe_authors when the same person wrote both."
     },
     "source_book": { "$ref": "#/$defs/SourceBook" }
   },

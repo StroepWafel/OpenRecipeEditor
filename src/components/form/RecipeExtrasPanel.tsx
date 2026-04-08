@@ -92,6 +92,7 @@ export function RecipeExtrasPanel({
   );
 
   const sourceUrl = typeof recipe.source_url === "string" ? recipe.source_url : "";
+  const recipeAuthors = nonEmptyStringArray(recipe.recipe_authors);
   const sourceAuthors = asStringArray(recipe.source_authors);
   const sb = sourceBookFromUnknown(recipe.source_book);
 
@@ -637,14 +638,37 @@ export function RecipeExtrasPanel({
           summary={
             sourceUrl.trim()
               ? sourceUrl.replace(/^https?:\/\//, "").slice(0, 48)
-              : sourceAuthors.length
-                ? `Authors: ${sourceAuthors.length}`
-                : sb.title
-                  ? sb.title
-                  : "Not set"
+              : recipeAuthors.length
+                ? `Recipe: ${recipeAuthors.length} author(s)`
+                : sourceAuthors.length
+                  ? `Source authors: ${sourceAuthors.length}`
+                  : sb.title
+                    ? sb.title
+                    : "Not set"
           }
         >
           <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="recipe_authors" className="flex items-center gap-1.5">
+                <Users className="size-3.5" />
+                recipe_authors (one per line)
+              </Label>
+              <p className="text-xs text-[var(--color-muted)]">
+                Who wrote or created this recipe (including yourself). Separate from
+                source authors below, which cite an external publication.
+              </p>
+              <Textarea
+                id="recipe_authors"
+                value={recipeAuthors.join("\n")}
+                onChange={(e) =>
+                  onExtrasChange({
+                    recipe_authors: nonEmptyLinesToArray(e.target.value),
+                  })
+                }
+                placeholder="One name per line"
+                className="min-h-[72px] font-mono text-xs"
+              />
+            </div>
             <div className="space-y-1.5">
               <Label htmlFor="source_url" className="flex items-center gap-1.5">
                 <LinkIcon className="size-3.5" />
@@ -665,6 +689,10 @@ export function RecipeExtrasPanel({
                 <Users className="size-3.5" />
                 source_authors (one per line)
               </Label>
+              <p className="text-xs text-[var(--color-muted)]">
+                Authors credited on the site, book, or other external source (not
+                necessarily who entered the recipe here).
+              </p>
               <Textarea
                 id="source_authors"
                 value={sourceAuthors.join("\n")}

@@ -11,6 +11,7 @@ export type InterpretedValidationError = {
 const KEY_LABELS: Record<string, string> = {
   recipe_name: "Recipe name",
   recipe_uuid: "Recipe ID",
+  recipe_authors: "Recipe authors",
   notes: "Notes",
   categories: "Categories",
   cor: "Country / region",

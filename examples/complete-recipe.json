@@ -1,6 +1,7 @@
 {
   "$schema": "https://food-for-eating.com/schema/open-recipe.schema.json",
   "recipe_name": "Complete example",
+  "recipe_authors": ["Open Recipe Editor"],
   "notes": ["Illustrative recipe with metric measurements only."],
   "categories": ["quick"],
   "tags": ["example"],
