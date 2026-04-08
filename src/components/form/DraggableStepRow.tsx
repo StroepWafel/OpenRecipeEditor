@@ -17,6 +17,8 @@ type Props = {
   index: number;
   onStepChange: (id: string, next: Record<string, unknown>) => void;
   onRemove: (id: string) => void;
+  collapseAllSignal?: number;
+  expandAllSignal?: number;
 };
 
 /**
@@ -28,6 +30,8 @@ export function DraggableStepRow({
   index,
   onStepChange,
   onRemove,
+  collapseAllSignal = 0,
+  expandAllSignal = 0,
 }: Props) {
   const dragControls = useDragControls();
 
@@ -65,6 +69,8 @@ export function DraggableStepRow({
             value={row.data}
             onChange={(next) => onStepChange(row.id, next)}
             onRemove={() => onRemove(row.id)}
+            collapseAllSignal={collapseAllSignal}
+            expandAllSignal={expandAllSignal}
           />
         </div>
       </div>

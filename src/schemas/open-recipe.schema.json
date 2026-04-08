@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://openrecipestandard.org/schema/open-recipe.schema.json",
+  "$id": "https://food-for-eating.com/schema/open-recipe.schema.json",
   "title": "Open Recipe Standard",
-  "$comment": "Normative JSON Schema for the Open Recipe Standard: a portable, vendor-neutral format for encoding recipes for interchange between applications and libraries. Each ingredient is an object with a required name field. Measurements use quantity_kind and unit_system for unambiguous conversion. Ingredient amount fields are written for base_yield; scaling to other batch sizes is done by multiplying every ingredient amount (and comparing yields in the same quantity_kind/unit) by a scale factor. Provisional or vendor-specific fields use keys matching ^X-.",
+  "$comment": "Normative JSON Schema for the Open Recipe Standard: a portable, vendor-neutral format for encoding recipes for interchange between applications and libraries. All measurements use SI / metric units only (unit_system is always metric). For ingredient amounts, unit follows the allowlist for each quantity_kind except count: when quantity_kind is count, unit is any non-empty label (e.g. cookies, egg rolls). For mass or volume, unit is a fixed metric code (mg, g, kg or ml, cl, L). base_yield may be count, mass, or volume. Provisional or vendor-specific fields use keys matching ^X-.",
   "type": "object",
   "required": ["recipe_name"],
   "properties": {
@@ -19,8 +19,8 @@
       "description": "Recipe-level notes."
     },
     "base_yield": {
-      "$ref": "#/$defs/Measurement",
-      "description": "What the written ingredient amounts produce (e.g. 24 cookies, 6 servings). To scale: multiply each ingredient amount by (target_yield_amount / base_yield.amount) when both are in the same unit and quantity_kind, or by an explicit scale factor chosen by the user."
+      "$ref": "#/$defs/YieldMeasurement",
+      "description": "What the written ingredient amounts produce. Only count, mass, or volume (not temperature or duration). For count output, unit is any non-empty label (e.g. cookies, muffins). For mass or volume, unit is a fixed metric code (g, ml, …). To scale: multiply each ingredient amount by (target_yield_amount / base_yield.amount) when comparable, or by an explicit scale factor."
     },
     "ingredients": {
       "type": "array",
@@ -39,11 +39,11 @@
     },
     "oven_temp": {
       "$ref": "#/$defs/Measurement",
-      "description": "Starting oven temperature; use quantity_kind temperature."
+      "description": "Starting oven temperature; quantity_kind temperature; unit C (degrees Celsius)."
     },
     "oven_time": {
       "$ref": "#/$defs/Measurement",
-      "description": "Overall oven duration; use quantity_kind duration."
+      "description": "Overall oven duration; quantity_kind duration; metric time units (min, s, h, etc.)."
     },
     "source_url": {
       "type": "string",
@@ -74,7 +74,7 @@
       },
       "then": {
         "properties": {
-          "base_yield": { "$ref": "#/$defs/Measurement" }
+          "base_yield": { "$ref": "#/$defs/YieldMeasurement" }
         },
         "required": ["base_yield"]
       }
@@ -88,16 +88,16 @@
     "QuantityKind": {
       "type": "string",
       "enum": ["mass", "volume", "count", "temperature", "duration"],
-      "description": "mass vs volume vs count; temperature/duration for oven fields. Volume (cup, tsp) is never mass."
+      "description": "mass vs volume vs count; temperature (°C) and duration (s, min, h) for oven fields. Volume (ml, L) is never mass."
     },
     "UnitSystem": {
       "type": "string",
-      "enum": ["metric", "us_customary", "imperial", "unspecified"],
-      "description": "Disambiguates US cup vs metric cup, mass oz vs fl oz, etc."
+      "const": "metric",
+      "description": "This standard only allows the metric system; value must be \"metric\"."
     },
     "Measurement": {
       "type": "object",
-      "description": "A quantity with explicit kind and system for safe conversion.",
+      "description": "A quantity with unit_system \"metric\". For mass, volume, temperature, and duration, unit is a fixed code (see allOf). For count, unit is any non-empty human-readable label for what is counted.",
       "required": ["amount", "unit", "quantity_kind", "unit_system"],
       "properties": {
         "amount": {
@@ -106,12 +106,94 @@
         },
         "unit": {
           "type": "string",
-          "description": "Unit code (e.g. g, ml, cup, tsp, each, C, F, minutes)."
+          "description": "Fixed unit code for mass, volume, temperature, or duration; for count, any non-empty label (see allOf)."
         },
         "quantity_kind": { "$ref": "#/$defs/QuantityKind" },
         "unit_system": { "$ref": "#/$defs/UnitSystem" }
       },
-      "additionalProperties": false
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "if": {
+            "properties": { "quantity_kind": { "const": "mass" } },
+            "required": ["quantity_kind"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "unit": { "enum": ["mg", "g", "kg"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "quantity_kind": { "const": "volume" } },
+            "required": ["quantity_kind"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "unit": { "enum": ["ml", "cl", "L"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "quantity_kind": { "const": "count" } },
+            "required": ["quantity_kind"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "unit": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Human-readable name for what is counted (plural is fine), not limited to a fixed vocabulary."
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "quantity_kind": { "const": "temperature" } },
+            "required": ["quantity_kind"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "unit": { "enum": ["C"] }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": { "quantity_kind": { "const": "duration" } },
+            "required": ["quantity_kind"]
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "unit": { "enum": ["ms", "s", "min", "h"] }
+            }
+          }
+        }
+      ]
+    },
+    "YieldMeasurement": {
+      "description": "How much recipe output the written amounts represent: count, mass, or volume only. For count, unit is a free-form label (what is being counted). For mass or volume, unit uses the same fixed metric codes as Measurement.",
+      "allOf": [
+        { "$ref": "#/$defs/Measurement" },
+        {
+          "type": "object",
+          "properties": {
+            "quantity_kind": {
+              "type": "string",
+              "enum": ["count", "mass", "volume"],
+              "description": "Measure output as a number of items (count), total mass, or total volume."
+            }
+          }
+        }
+      ]
     },
     "IngredientSansSubstitutions": {
       "type": "object",

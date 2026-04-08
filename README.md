@@ -1,6 +1,6 @@
 # Open Recipe Editor
 
-A browser-based graphical editor for recipes that follow the [Open Recipe Standard](https://github.com/StroepWafel/OpenRecipeStandard). On load it fetches the JSON Schema and the minimal example from GitHub (tag `v1.0.0` by default, with a fallback to `main` if the tag is not available yet).
+A browser-based graphical editor for recipes that follow the [Open Recipe Standard](https://github.com/StroepWafel/OpenRecipeStandard). The public site is planned at [food-for-eating.com](https://food-for-eating.com). On load it fetches the JSON Schema and the minimal example from GitHub (tag `v1.0.0` by default, with a fallback to `main` if the tag is not available yet).
 
 ## Run locally
 

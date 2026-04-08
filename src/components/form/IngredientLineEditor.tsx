@@ -20,6 +20,10 @@ type Props = {
   onRemove?: () => void;
   title: string;
   allowSubstitutions: boolean;
+  /** Increment from parent to collapse this row (and pass through to nested lines). */
+  collapseAllSignal?: number;
+  /** Increment from parent to expand this row (and pass through to nested lines). */
+  expandAllSignal?: number;
 };
 
 /** Normalize legacy `amounts` arrays to singular `amount`. */
@@ -46,6 +50,8 @@ export function IngredientLineEditor({
   onRemove,
   title,
   allowSubstitutions,
+  collapseAllSignal = 0,
+  expandAllSignal = 0,
 }: Props) {
   const uid = React.useId();
   const line = lineOrDefault(value);
@@ -71,6 +77,16 @@ export function IngredientLineEditor({
   };
 
   const [minimized, setMinimized] = React.useState(false);
+
+  React.useEffect(() => {
+    if (collapseAllSignal === 0) return;
+    setMinimized(true);
+  }, [collapseAllSignal]);
+
+  React.useEffect(() => {
+    if (expandAllSignal === 0) return;
+    setMinimized(false);
+  }, [expandAllSignal]);
 
   return (
     <Card className="border-[var(--color-border)]">
@@ -215,6 +231,8 @@ export function IngredientLineEditor({
                     key={si}
                     title={`Substitution ${si + 1}`}
                     allowSubstitutions={false}
+                    collapseAllSignal={collapseAllSignal}
+                    expandAllSignal={expandAllSignal}
                     value={sub}
                     onChange={(next) => {
                       const copy = [...subs];

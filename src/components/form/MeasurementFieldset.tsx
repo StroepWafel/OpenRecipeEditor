@@ -9,17 +9,31 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  resolveMeasurementUnit,
+  unitsForQuantityKind,
+} from "@/lib/measurement-units";
 import { isJsonObject } from "@/lib/recipe-document";
 import { defaultMeasurement } from "@/lib/recipe-document";
-import { QUANTITY_KINDS, UNIT_SYSTEMS } from "./constants";
+import { QUANTITY_KINDS } from "./constants";
 
 type Props = {
   value: Record<string, unknown>;
   onChange: (next: Record<string, unknown>) => void;
   label?: string;
+  /**
+   * If set, only these quantity kinds appear in the selector (e.g. `base_yield` uses
+   * count, mass, volume per `YieldMeasurement` — not temperature or duration).
+   */
+  quantityKindOptions?: readonly string[];
 };
 
-export function MeasurementFieldset({ value, onChange, label }: Props) {
+export function MeasurementFieldset({
+  value,
+  onChange,
+  label,
+  quantityKindOptions,
+}: Props) {
   const uid = React.useId();
   const v = isJsonObject(value) ? value : defaultMeasurement();
   const amount =
@@ -31,15 +45,50 @@ export function MeasurementFieldset({ value, onChange, label }: Props) {
   const unit = typeof v.unit === "string" ? v.unit : "";
   const qk =
     typeof v.quantity_kind === "string" ? v.quantity_kind : "count";
-  const us =
-    typeof v.unit_system === "string" ? v.unit_system : "unspecified";
+  const us = typeof v.unit_system === "string" ? v.unit_system : "metric";
 
-  const patch = (patch: Record<string, unknown>) => {
-    onChange({ ...v, ...patch });
-  };
+  const kinds = quantityKindOptions ?? QUANTITY_KINDS;
+  const resolvedKind = kinds.includes(qk) ? qk : kinds[0];
+  const isCount = resolvedKind === "count";
+
+  const resolvedUnit = isCount
+    ? unit
+    : resolveMeasurementUnit(resolvedKind, unit);
+
+  const allowedUnits = React.useMemo(
+    () => unitsForQuantityKind(resolvedKind),
+    [resolvedKind]
+  );
+
+  const patch = React.useCallback(
+    (patch: Record<string, unknown>) => {
+      onChange({ ...v, ...patch });
+    },
+    [onChange, v]
+  );
+
+  React.useEffect(() => {
+    if (qk !== resolvedKind) {
+      patch({ quantity_kind: resolvedKind });
+    }
+  }, [qk, resolvedKind, patch]);
+
+  React.useEffect(() => {
+    if (isCount) return;
+    const next = resolveMeasurementUnit(resolvedKind, unit);
+    if (unit !== next) {
+      patch({ unit: next });
+    }
+  }, [unit, resolvedKind, patch, isCount]);
+
+  React.useEffect(() => {
+    if (us !== "metric") {
+      patch({ unit_system: "metric" });
+    }
+  }, [us, patch]);
 
   return (
-    <div className="grid gap-3 rounded-md border border-[var(--color-border)]/80 bg-stone-50/50 p-3 sm:grid-cols-2">
+    <div className="grid w-full min-w-0 gap-3 rounded-md border border-[var(--color-border)]/80 bg-stone-50/50 p-3 sm:grid-cols-2 xl:grid-cols-3">
       {label ? (
         <div className="col-span-full text-xs font-medium text-[var(--color-muted)]">
           {label}
@@ -58,25 +107,16 @@ export function MeasurementFieldset({ value, onChange, label }: Props) {
         />
       </div>
       <div className="space-y-1.5">
-        <Label htmlFor={`${uid}-unit`}>Unit</Label>
-        <Input
-          id={`${uid}-unit`}
-          value={unit}
-          onChange={(e) => patch({ unit: e.target.value })}
-          placeholder="g, ml, cup, each…"
-        />
-      </div>
-      <div className="space-y-1.5">
         <Label>Quantity kind</Label>
         <Select
-          value={qk}
+          value={resolvedKind}
           onValueChange={(val) => patch({ quantity_kind: val })}
         >
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {QUANTITY_KINDS.map((k) => (
+            {kinds.map((k) => (
               <SelectItem key={k} value={k}>
                 {k}
               </SelectItem>
@@ -85,19 +125,32 @@ export function MeasurementFieldset({ value, onChange, label }: Props) {
         </Select>
       </div>
       <div className="space-y-1.5">
-        <Label>Unit system</Label>
-        <Select value={us} onValueChange={(val) => patch({ unit_system: val })}>
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {UNIT_SYSTEMS.map((k) => (
-              <SelectItem key={k} value={k}>
-                {k}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Label htmlFor={`${uid}-unit`}>Unit</Label>
+        {isCount ? (
+          <Input
+            id={`${uid}-unit`}
+            value={unit}
+            onChange={(e) => patch({ unit: e.target.value })}
+            placeholder="e.g. cookies, servings, each…"
+            className="font-mono text-sm"
+          />
+        ) : (
+          <Select
+            value={resolvedUnit}
+            onValueChange={(val) => patch({ unit: val })}
+          >
+            <SelectTrigger id={`${uid}-unit`}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="max-h-[min(24rem,70vh)]">
+              {allowedUnits.map((u) => (
+                <SelectItem key={u} value={u}>
+                  {u}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
       </div>
     </div>
   );

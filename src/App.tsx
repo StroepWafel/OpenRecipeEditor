@@ -18,6 +18,7 @@ import { readJsonFile, saveRecipeJson } from "@/lib/recipe-files";
 import {
   asObject,
   emptyRecipe,
+  mergeExtrasPatch,
   missingBaseYieldWarnings,
 } from "@/lib/recipe-document";
 import { compileValidator, formatAjvErrors } from "@/lib/schema";
@@ -198,7 +199,7 @@ export default function App() {
     <div className="relative min-h-screen">
       <SubtleGridBackground />
       <header className="sticky top-0 z-20 border-b border-[var(--color-border)] bg-[var(--color-canvas)]/85 backdrop-blur-md">
-        <div className="mx-auto flex max-w-5xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-3 px-4 py-4 sm:px-6 lg:px-8 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-xl font-semibold tracking-tight text-[var(--color-ink)]">
               Open Recipe Editor
@@ -293,7 +294,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-5xl px-4 py-8">
+      <main className="relative z-10 mx-auto w-full max-w-screen-2xl px-4 py-8 sm:px-6 lg:px-8">
         {loading ? (
           <div className="flex items-center gap-2 text-[var(--color-muted)]">
             <Loader2 className="size-5 animate-spin" />
@@ -357,21 +358,36 @@ export default function App() {
         {recipe && essentials ? (
           <RecipeForm
             recipe={recipe}
+            extras={extras}
             editorSyncKey={editorSyncKey}
             onEssentialsChange={(patch) =>
               setEssentials((e) => ({ ...(e ?? emptyRecipe()), ...patch }))
             }
+            onExtrasChange={(patch) =>
+              setExtras((prev) => mergeExtrasPatch(prev, patch))
+            }
+            onExtrasReplace={(next) => setExtras(next)}
           />
         ) : null}
       </main>
 
-      <footer className="relative z-10 border-t border-[var(--color-border)] px-4 py-6 text-center text-xs text-[var(--color-muted)]">
-        {schemaText ? (
-          <span>Schema loaded ({schemaText.length.toLocaleString()} chars).</span>
-        ) : (
-          <span>Schema not loaded.</span>
-        )}{" "}
-        Open Recipe Standard — graphical editor.
+      <footer className="relative z-10 border-t border-[var(--color-border)] px-4 py-6 text-center text-xs text-[var(--color-muted)] sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-screen-2xl">
+          {schemaText ? (
+            <span>Schema loaded ({schemaText.length.toLocaleString()} chars).</span>
+          ) : (
+            <span>Schema not loaded.</span>
+          )}{" "}
+          Open Recipe Standard — graphical editor.{" "}
+          <a
+            href="https://food-for-eating.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[var(--color-accent)] underline-offset-2 hover:underline"
+          >
+            food-for-eating.com
+          </a>
+        </div>
       </footer>
     </div>
   );

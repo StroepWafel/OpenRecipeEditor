@@ -5,6 +5,8 @@ import {
   defaultBaseYield,
   defaultMeasurement,
   isJsonObject,
+  normalizeMeasurementMetric,
+  normalizeYieldMeasurement,
 } from "@/lib/recipe-document";
 
 /** Keys the simplified editor owns; all other keys are preserved from loaded files only. */
@@ -30,6 +32,10 @@ function migrateIngredientLine(line: Record<string, unknown>): Record<string, un
   }
   delete out.amounts;
 
+  if (isJsonObject(out.amount)) {
+    out.amount = normalizeMeasurementMetric(out.amount);
+  }
+
   const subs = out.substitutions;
   if (Array.isArray(subs)) {
     out.substitutions = subs.map((s) =>
@@ -54,6 +60,17 @@ export function migrateLegacyRecipeShape(
   }
   delete out.yields;
 
+  if (isJsonObject(out.base_yield)) {
+    out.base_yield = normalizeYieldMeasurement(out.base_yield);
+  }
+
+  for (const key of ["oven_temp", "oven_time"] as const) {
+    const v = out[key];
+    if (isJsonObject(v)) {
+      out[key] = normalizeMeasurementMetric(v);
+    }
+  }
+
   const ingredients = out.ingredients;
   if (Array.isArray(ingredients)) {
     out.ingredients = ingredients.map((ing) =>
@@ -71,7 +88,7 @@ export function ensureEssentials(
       typeof partial.recipe_name === "string" ? partial.recipe_name : "",
     notes: asStringArray(partial.notes),
     base_yield: isJsonObject(partial.base_yield)
-      ? partial.base_yield
+      ? normalizeYieldMeasurement(partial.base_yield)
       : defaultBaseYield(),
     ingredients: asIngredientArray(partial.ingredients),
     steps: asStepArray(partial.steps),
