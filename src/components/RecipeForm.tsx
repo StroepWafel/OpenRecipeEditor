@@ -227,7 +227,7 @@ export function RecipeForm({
               when collapsed.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col items-end gap-1">
             <Button
               type="button"
               variant="ghost"
@@ -235,7 +235,7 @@ export function RecipeForm({
               disabled={ingredients.length === 0}
               onClick={() => setIngredientCollapseAll((n) => n + 1)}
             >
-              <ChevronsDown className="size-4" />
+              <ChevronsUp className="size-4" />
               Collapse all
             </Button>
             <Button
@@ -245,12 +245,8 @@ export function RecipeForm({
               disabled={ingredients.length === 0}
               onClick={() => setIngredientExpandAll((n) => n + 1)}
             >
-              <ChevronsUp className="size-4" />
+              <ChevronsDown className="size-4" />
               Expand all
-            </Button>
-            <Button type="button" variant="secondary" size="sm" onClick={addIngredient}>
-              <Plus className="size-4" />
-              Add ingredient
             </Button>
           </div>
         </div>
@@ -270,6 +266,16 @@ export function RecipeForm({
             onRemove={() => setIngredients(ingredients.filter((_, j) => j !== i))}
           />
         ))}
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="w-full sm:w-auto"
+          onClick={addIngredient}
+        >
+          <Plus className="size-4" />
+          Add ingredient
+        </Button>
         </div>
 
         <div className="min-w-0 space-y-3">
@@ -281,7 +287,7 @@ export function RecipeForm({
               expand.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-col items-end gap-1">
             <Button
               type="button"
               variant="ghost"
@@ -289,7 +295,7 @@ export function RecipeForm({
               disabled={stepRows.length === 0}
               onClick={() => setStepCollapseAll((n) => n + 1)}
             >
-              <ChevronsDown className="size-4" />
+              <ChevronsUp className="size-4" />
               Collapse all
             </Button>
             <Button
@@ -299,17 +305,8 @@ export function RecipeForm({
               disabled={stepRows.length === 0}
               onClick={() => setStepExpandAll((n) => n + 1)}
             >
-              <ChevronsUp className="size-4" />
+              <ChevronsDown className="size-4" />
               Expand all
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={addStep}
-            >
-              <Plus className="size-4" />
-              Add step
             </Button>
           </div>
         </div>
@@ -333,6 +330,16 @@ export function RecipeForm({
             ))}
           </Reorder.Group>
         </MotionConfig>
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          className="w-full sm:w-auto"
+          onClick={addStep}
+        >
+          <Plus className="size-4" />
+          Add step
+        </Button>
         </div>
       </div>
     </div>

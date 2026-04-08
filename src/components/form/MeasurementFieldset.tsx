@@ -13,9 +13,10 @@ import {
   resolveMeasurementUnit,
   unitsForQuantityKind,
 } from "@/lib/measurement-units";
+import { parseAmountFromInput } from "@/lib/parse-amount-input";
 import { isJsonObject } from "@/lib/recipe-document";
 import { defaultMeasurement } from "@/lib/recipe-document";
-import { QUANTITY_KINDS } from "./constants";
+import { QUANTITY_KINDS, UNIT_SYSTEMS } from "./constants";
 
 type Props = {
   value: Record<string, unknown>;
@@ -50,15 +51,25 @@ export function MeasurementFieldset({
   const kinds = quantityKindOptions ?? QUANTITY_KINDS;
   const resolvedKind = kinds.includes(qk) ? qk : kinds[0];
   const isCount = resolvedKind === "count";
+  const isVolume = resolvedKind === "volume";
+  const volumeSystem: "metric" | "us_customary" =
+    us === "us_customary" ? "us_customary" : "metric";
 
   const resolvedUnit = isCount
     ? unit
-    : resolveMeasurementUnit(resolvedKind, unit);
+    : resolveMeasurementUnit(
+        resolvedKind,
+        unit,
+        isVolume ? volumeSystem : "metric"
+      );
 
-  const allowedUnits = React.useMemo(
-    () => unitsForQuantityKind(resolvedKind),
-    [resolvedKind]
-  );
+  const allowedUnits = React.useMemo(() => {
+    if (isCount) return [];
+    if (isVolume) {
+      return unitsForQuantityKind("volume", volumeSystem);
+    }
+    return unitsForQuantityKind(resolvedKind, "metric");
+  }, [isCount, isVolume, resolvedKind, volumeSystem]);
 
   const patch = React.useCallback(
     (patch: Record<string, unknown>) => {
@@ -75,17 +86,19 @@ export function MeasurementFieldset({
 
   React.useEffect(() => {
     if (isCount) return;
-    const next = resolveMeasurementUnit(resolvedKind, unit);
+    const sys = isVolume ? volumeSystem : "metric";
+    const next = resolveMeasurementUnit(resolvedKind, unit, sys);
     if (unit !== next) {
       patch({ unit: next });
     }
-  }, [unit, resolvedKind, patch, isCount]);
+  }, [unit, resolvedKind, patch, isCount, isVolume, volumeSystem]);
 
   React.useEffect(() => {
+    if (isVolume) return;
     if (us !== "metric") {
       patch({ unit_system: "metric" });
     }
-  }, [us, patch]);
+  }, [isVolume, us, patch]);
 
   return (
     <div className="grid w-full min-w-0 gap-3 rounded-md border border-[var(--color-border)]/80 bg-stone-50/50 p-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -102,7 +115,7 @@ export function MeasurementFieldset({
           step="any"
           value={Number.isFinite(amount) ? amount : 0}
           onChange={(e) =>
-            patch({ amount: parseFloat(e.target.value) || 0 })
+            patch({ amount: parseAmountFromInput(e.target.value) })
           }
         />
       </div>
@@ -124,6 +137,32 @@ export function MeasurementFieldset({
           </SelectContent>
         </Select>
       </div>
+      {isVolume ? (
+        <div className="space-y-1.5">
+          <Label>Unit system</Label>
+          <Select
+            value={volumeSystem}
+            onValueChange={(val) => {
+              const nextSys = val === "us_customary" ? "us_customary" : "metric";
+              patch({
+                unit_system: nextSys,
+                unit: resolveMeasurementUnit("volume", unit, nextSys),
+              });
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {UNIT_SYSTEMS.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s === "metric" ? "Metric (ml, cl, L)" : "US customary (tsp, tbsp, cup)"}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      ) : null}
       <div className="space-y-1.5">
         <Label htmlFor={`${uid}-unit`}>Unit</Label>
         {isCount ? (
@@ -137,7 +176,20 @@ export function MeasurementFieldset({
         ) : (
           <Select
             value={resolvedUnit}
-            onValueChange={(val) => patch({ unit: val })}
+            onValueChange={(val) => {
+              if (isVolume) {
+                const usNext =
+                  val === "tsp" || val === "tbsp" || val === "cup"
+                    ? "us_customary"
+                    : "metric";
+                patch({
+                  unit: val,
+                  unit_system: usNext,
+                });
+              } else {
+                patch({ unit: val });
+              }
+            }}
           >
             <SelectTrigger id={`${uid}-unit`}>
               <SelectValue />

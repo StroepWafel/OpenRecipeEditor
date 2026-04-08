@@ -1,4 +1,7 @@
-import { resolveMeasurementUnit } from "@/lib/measurement-units";
+import {
+  resolveMeasurementUnit,
+  US_VOLUME_TO_ML,
+} from "@/lib/measurement-units";
 
 export function isJsonObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
@@ -59,6 +62,7 @@ export function defaultMeasurement(): Record<string, unknown> {
 
 /**
  * Coerces any measurement to metric (`unit_system: "metric"`) and a schema-allowed `unit`.
+ * Converts US customary volume (tsp, tbsp, cup) to ml using standard US kitchen definitions.
  * Converts °F → °C and K → °C for temperature when migrating legacy data.
  */
 export function normalizeMeasurementMetric(
@@ -72,6 +76,17 @@ export function normalizeMeasurementMetric(
         ? parseFloat(m.amount)
         : 0;
   let unit = typeof m.unit === "string" ? m.unit : "";
+  const unitSystem =
+    typeof m.unit_system === "string" ? m.unit_system : "metric";
+
+  if (qk === "volume" && unitSystem === "us_customary") {
+    const t = unit.trim();
+    const factor = US_VOLUME_TO_ML[t];
+    if (factor !== undefined) {
+      amount = amount * factor;
+      unit = "ml";
+    }
+  }
 
   if (qk === "temperature") {
     if (unit === "F") {
@@ -97,7 +112,7 @@ export function normalizeMeasurementMetric(
       ? unit.trim() === ""
         ? "each"
         : unit.trim()
-      : resolveMeasurementUnit(qk, unit);
+      : resolveMeasurementUnit(qk, unit, "metric");
 
   return {
     ...m,
@@ -109,7 +124,8 @@ export function normalizeMeasurementMetric(
 }
 
 /**
- * Coerces a measurement to valid yield semantics: count, mass, or volume only, metric only.
+ * Coerces a measurement to valid yield semantics: count, mass, or volume only.
+ * Normalizes to metric units for the in-app model (US volume → ml).
  * Used when loading legacy data or migrating `yields[0]` that used a full Measurement kind set.
  */
 export function normalizeYieldMeasurement(

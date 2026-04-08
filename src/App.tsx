@@ -26,7 +26,9 @@ import {
   mergeExtrasPatch,
   missingBaseYieldWarnings,
 } from "@/lib/recipe-document";
-import { compileValidator, formatAjvErrors } from "@/lib/schema";
+import { interpretAjvErrors } from "@/lib/ajv-error-interpreter";
+import type { InterpretedValidationError } from "@/lib/ajv-error-interpreter";
+import { compileValidator } from "@/lib/schema";
 import type { ValidateFunction } from "ajv";
 import {
   AlertCircle,
@@ -56,7 +58,9 @@ export default function App() {
     null
   );
   const [loading, setLoading] = React.useState(true);
-  const [ajvErrors, setAjvErrors] = React.useState<string[]>([]);
+  const [ajvErrors, setAjvErrors] = React.useState<InterpretedValidationError[]>(
+    []
+  );
   const [baseYieldHints, setBaseYieldHints] = React.useState<string[]>([]);
   const [editorSyncKey, setEditorSyncKey] = React.useState(0);
   const [baselineFingerprint, setBaselineFingerprint] = React.useState<
@@ -160,12 +164,17 @@ export default function App() {
     (doc: Record<string, unknown>) => {
       setBaseYieldHints(missingBaseYieldWarnings(doc));
       if (!validator) {
-        setAjvErrors(["Validator not ready."]);
+        setAjvErrors([
+          {
+            where: "Validation",
+            message: "The schema validator is not ready yet. Try again in a moment.",
+          },
+        ]);
         return;
       }
       const ok = validator(doc);
       if (ok) setAjvErrors([]);
-      else setAjvErrors(formatAjvErrors(validator.errors));
+      else setAjvErrors(interpretAjvErrors(validator.errors));
     },
     [validator]
   );
@@ -429,10 +438,16 @@ export default function App() {
                 Validation errors
               </div>
               <ScrollArea className="h-[min(24rem,50vh)] w-full pr-3">
-                <ul className="list-inside list-disc space-y-1.5 py-1 text-sm text-red-900">
+                <ul className="space-y-2 py-1 text-sm text-red-900">
                   {ajvErrors.map((err, i) => (
-                    <li key={i} className="break-words font-mono text-xs">
-                      {err}
+                    <li
+                      key={i}
+                      className="break-words rounded-md border border-red-100/90 bg-white/70 px-3 py-2"
+                    >
+                      <div className="font-medium text-red-950">{err.where}</div>
+                      <div className="mt-1 text-xs leading-relaxed text-red-900/95">
+                        {err.message}
+                      </div>
                     </li>
                   ))}
                 </ul>

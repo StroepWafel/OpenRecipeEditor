@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://food-for-eating.com/schema/open-recipe.schema.json",
   "title": "Open Recipe Standard",
-  "$comment": "Normative JSON Schema for the Open Recipe Standard: a portable, vendor-neutral format for encoding recipes for interchange between applications and libraries. All measurements use SI / metric units only (unit_system is always metric). Optional metadata includes categories, cor, cuisine, tags, dietary/allergen hints, skill level, meal type, equipment, and active/prep/total times. For ingredient amounts, unit follows the allowlist for each quantity_kind. For base_yield when quantity_kind is count, unit is a free-form label. Provisional fields use keys matching ^X-.",
+  "$comment": "Normative JSON Schema for the Open Recipe Standard: a portable, vendor-neutral format for encoding recipes for interchange between applications and libraries. Mass, count, temperature, and duration use metric (SI) units; volume may use metric (ml, cl, L) or US customary kitchen units (tsp, tbsp, cup) with unit_system us_customary. Optional metadata includes categories, cor, cuisine, tags, dietary/allergen hints, skill level, meal type, equipment, and active/prep/total times. For ingredient amounts, unit follows the allowlist for each quantity_kind and unit_system. For base_yield when quantity_kind is count, unit is a free-form label and unit_system must be metric. Provisional fields use keys matching ^X-.",
   "type": "object",
   "required": ["recipe_name"],
   "properties": {
@@ -97,7 +97,7 @@
     },
     "base_yield": {
       "$ref": "#/$defs/YieldMeasurement",
-      "description": "What the written ingredient amounts produce. Only count, mass, or volume (not temperature or duration). For count output, unit is any non-empty label (e.g. cookies, muffins). For mass or volume, unit is a fixed metric code (g, ml, …). To scale: multiply each ingredient amount by (target_yield_amount / base_yield.amount) when comparable, or by an explicit scale factor."
+      "description": "What the written ingredient amounts produce. Only count, mass, or volume (not temperature or duration). For count output, unit is any non-empty label (e.g. cookies, muffins) and unit_system must be metric. For mass or volume, unit follows Measurement rules: metric mass (g, …), metric volume (ml, cl, L), or US customary volume (tsp, tbsp, cup with unit_system us_customary). To scale: multiply each ingredient amount by (target_yield_amount / base_yield.amount) when comparable, or by an explicit scale factor."
     },
     "ingredients": {
       "type": "array",
@@ -186,16 +186,16 @@
     "QuantityKind": {
       "type": "string",
       "enum": ["mass", "volume", "count", "temperature", "duration"],
-      "description": "mass vs volume vs count; temperature (°C) and duration (s, min, h) for oven fields. Volume (ml, L) is never mass."
+      "description": "mass vs volume vs count; temperature (°C) and duration (s, min, h) for oven fields. Volume may be metric (ml, cl, L) or US customary kitchen (tsp, tbsp, cup); it is never mass."
     },
     "UnitSystem": {
       "type": "string",
-      "const": "metric",
-      "description": "This standard only allows the metric system; value must be \"metric\"."
+      "enum": ["metric", "us_customary"],
+      "description": "Measurement system: \"metric\" for SI/metric units; \"us_customary\" only allowed for quantity_kind volume with units tsp, tbsp, or cup (US kitchen measures). All other quantity kinds require \"metric\"."
     },
     "Measurement": {
       "type": "object",
-      "description": "A metric quantity: unit_system must be \"metric\". Field unit must be a standard code for quantity_kind (see allOf).",
+      "description": "A quantity with explicit unit_system. Field unit must match quantity_kind and unit_system (see allOf). Mass, count, temperature, and duration use metric only; volume may be metric (ml, cl, L) or US customary (tsp, tbsp, cup).",
       "required": ["amount", "unit", "quantity_kind", "unit_system"],
       "properties": {
         "amount": {
@@ -204,7 +204,7 @@
         },
         "unit": {
           "type": "string",
-          "description": "Standard metric unit code for this quantity_kind (see allOf allowlists)."
+          "description": "Unit code for this quantity_kind and unit_system (see allOf allowlists)."
         },
         "quantity_kind": { "$ref": "#/$defs/QuantityKind" },
         "unit_system": { "$ref": "#/$defs/UnitSystem" }
@@ -219,8 +219,10 @@
           "then": {
             "type": "object",
             "properties": {
-              "unit": { "enum": ["mg", "g", "kg"] }
-            }
+              "unit": { "enum": ["mg", "g", "kg"] },
+              "unit_system": { "const": "metric" }
+            },
+            "required": ["unit_system"]
           }
         },
         {
@@ -229,10 +231,24 @@
             "required": ["quantity_kind"]
           },
           "then": {
-            "type": "object",
-            "properties": {
-              "unit": { "enum": ["ml", "cl", "L"] }
-            }
+            "oneOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "unit": { "enum": ["ml", "cl", "L"] },
+                  "unit_system": { "const": "metric" }
+                },
+                "required": ["unit", "unit_system"]
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "unit": { "enum": ["tsp", "tbsp", "cup"] },
+                  "unit_system": { "const": "us_customary" }
+                },
+                "required": ["unit", "unit_system"]
+              }
+            ]
           }
         },
         {
@@ -244,28 +260,13 @@
             "type": "object",
             "properties": {
               "unit": {
-                "enum": [
-                  "each",
-                  "dozen",
-                  "serving",
-                  "servings",
-                  "portion",
-                  "portions",
-                  "cookie",
-                  "cookies",
-                  "slice",
-                  "slices",
-                  "egg",
-                  "eggs",
-                  "batch",
-                  "batches",
-                  "loaf",
-                  "loaves",
-                  "muffin",
-                  "muffins"
-                ]
-              }
-            }
+                "type": "string",
+                "minLength": 1,
+                "description": "What is being counted (e.g. each, apples, cookies). Open vocabulary; use metric unit_system only."
+              },
+              "unit_system": { "const": "metric" }
+            },
+            "required": ["unit_system"]
           }
         },
         {
@@ -276,8 +277,10 @@
           "then": {
             "type": "object",
             "properties": {
-              "unit": { "enum": ["C"] }
-            }
+              "unit": { "enum": ["C"] },
+              "unit_system": { "const": "metric" }
+            },
+            "required": ["unit_system"]
           }
         },
         {
@@ -288,8 +291,10 @@
           "then": {
             "type": "object",
             "properties": {
-              "unit": { "enum": ["ms", "s", "min", "h"] }
-            }
+              "unit": { "enum": ["ms", "s", "min", "h"] },
+              "unit_system": { "const": "metric" }
+            },
+            "required": ["unit_system"]
           }
         }
       ]
@@ -307,7 +312,7 @@
       ]
     },
     "YieldMeasurement": {
-      "description": "How much recipe output the written amounts represent: count, mass, or volume only. For count, unit is a free-form label (what is being counted). For mass or volume, unit uses the same fixed metric codes as Measurement.",
+      "description": "How much recipe output the written amounts represent: count, mass, or volume only. For count, unit is a free-form label (what is being counted) and unit_system must be metric. For mass or volume, unit follows the same rules as Measurement (metric mass; metric or US customary volume).",
       "oneOf": [
         {
           "type": "object",
@@ -324,13 +329,13 @@
               "description": "Human-readable name for one counted item or batch (plural is fine), not limited to a fixed vocabulary."
             },
             "quantity_kind": { "const": "count" },
-            "unit_system": { "$ref": "#/$defs/UnitSystem" }
+            "unit_system": { "const": "metric" }
           },
           "additionalProperties": false
         },
         {
           "type": "object",
-          "description": "Output as total mass or volume using standard metric units.",
+          "description": "Output as total mass or volume; units follow Measurement (metric mass; metric or US customary volume).",
           "required": ["amount", "unit", "quantity_kind", "unit_system"],
           "allOf": [
             { "$ref": "#/$defs/Measurement" },
@@ -344,8 +349,7 @@
                 }
               }
             }
-          ],
-          "additionalProperties": false
+          ]
         }
       ]
     },

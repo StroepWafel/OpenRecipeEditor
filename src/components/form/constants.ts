@@ -8,8 +8,8 @@ export const QUANTITY_KINDS = [
 
 export { YIELD_QUANTITY_KINDS } from "@/lib/recipe-document";
 
-/** Normative schema: `unit_system` is always `"metric"`. */
-export const UNIT_SYSTEMS = ["metric"] as const;
+/** Normative schema: `metric` for SI units; `us_customary` only for volume (tsp, tbsp, cup). */
+export const UNIT_SYSTEMS = ["metric", "us_customary"] as const;
 
 export const OVEN_FAN = ["Off", "Low", "High"] as const;
 

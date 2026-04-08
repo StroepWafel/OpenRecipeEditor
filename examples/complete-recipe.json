@@ -1,0 +1,63 @@
+{
+  "$schema": "https://food-for-eating.com/schema/open-recipe.schema.json",
+  "recipe_name": "Complete example",
+  "notes": ["Illustrative recipe with metric measurements only."],
+  "categories": ["quick"],
+  "tags": ["example"],
+  "skill_level": "beginner",
+  "meal_type": ["lunch"],
+  "prep_time": {
+    "amount": 10,
+    "unit": "min",
+    "quantity_kind": "duration",
+    "unit_system": "metric"
+  },
+  "cook_time": {
+    "amount": 5,
+    "unit": "min",
+    "quantity_kind": "duration",
+    "unit_system": "metric"
+  },
+  "total_time": {
+    "amount": 15,
+    "unit": "min",
+    "quantity_kind": "duration",
+    "unit_system": "metric"
+  },
+  "equipment": ["saucepan"],
+  "base_yield": {
+    "amount": 500,
+    "unit": "ml",
+    "quantity_kind": "volume",
+    "unit_system": "metric"
+  },
+  "ingredients": [
+    {
+      "name": "Water",
+      "amount": {
+        "amount": 500,
+        "unit": "ml",
+        "quantity_kind": "volume",
+        "unit_system": "metric"
+      }
+    }
+  ],
+  "steps": [
+    {
+      "step": "Bring the water to a boil in a saucepan."
+    }
+  ],
+  "oven_temp": {
+    "amount": 180,
+    "unit": "C",
+    "quantity_kind": "temperature",
+    "unit_system": "metric"
+  },
+  "oven_time": {
+    "amount": 0,
+    "unit": "min",
+    "quantity_kind": "duration",
+    "unit_system": "metric"
+  },
+  "oven_fan": "Off"
+}

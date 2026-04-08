@@ -1,0 +1,13 @@
+{
+  "$schema": "https://food-for-eating.com/schema/open-recipe.schema.json",
+  "recipe_name": "Minimal example",
+  "notes": [],
+  "base_yield": {
+    "amount": 4,
+    "unit": "servings",
+    "quantity_kind": "count",
+    "unit_system": "metric"
+  },
+  "ingredients": [],
+  "steps": []
+}
