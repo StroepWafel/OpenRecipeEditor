@@ -7,7 +7,7 @@ import { defineConfig } from "vite";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  /** GitHub Pages project sites live under /<repo>/; set `VITE_BASE_PATH` in CI (see workflow). */
+  /** Subpath hosting only (e.g. legacy GitHub project pages); Cloudflare Pages uses default `"/"`. */
   base: process.env.VITE_BASE_PATH ?? "/",
   plugins: [react(), tailwindcss()],
   resolve: {
