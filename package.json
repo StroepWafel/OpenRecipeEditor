@@ -2,6 +2,7 @@
   "name": "open-recipe-editor",
   "private": true,
   "version": "1.0.0",
+  "license": "AGPL-3.0-only",
   "homepage": "https://food-for-eating.com",
   "type": "module",
   "scripts": {
