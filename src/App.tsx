@@ -83,6 +83,16 @@ export default function App() {
   );
 
   React.useEffect(() => {
+    if (!isDirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isDirty]);
+
+  React.useEffect(() => {
     if (!loading && recipe && baselineFingerprint === null) {
       setBaselineFingerprint(JSON.stringify(recipe));
     }
