@@ -43,7 +43,6 @@ import {
 import * as React from "react";
 
 const FAN_NONE = "__none__";
-const OVEN_REQUIRED_NONE = "__none__";
 const SKILL_NONE = "__none__";
 
 function nonEmptyStringArray(v: unknown): string[] {
@@ -115,13 +114,6 @@ export function RecipeExtrasPanel({
   }, [extras, editorSyncKey]);
 
   const fanSelectValue = fan || FAN_NONE;
-
-  const ovenRequiredSelectValue =
-    typeof recipe.oven_required === "boolean"
-      ? recipe.oven_required
-        ? "true"
-        : "false"
-      : OVEN_REQUIRED_NONE;
 
   const skillLevel =
     typeof recipe.skill_level === "string" &&
@@ -610,29 +602,28 @@ export function RecipeExtrasPanel({
         >
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="oven_required">Oven required (oven_required)</Label>
-              <p className="text-xs text-[var(--color-muted)]">
-                Whether an oven is needed for this recipe. Leave unset if unknown.
-              </p>
-              <Select
-                value={ovenRequiredSelectValue}
-                onValueChange={(v) => {
-                  if (v === OVEN_REQUIRED_NONE) {
-                    onExtrasChange({ oven_required: undefined });
-                  } else {
-                    onExtrasChange({ oven_required: v === "true" });
-                  }
-                }}
+              <label
+                htmlFor="oven_required"
+                className="flex cursor-pointer items-start gap-2.5 rounded-md border border-[var(--color-border)]/80 bg-stone-50/40 p-3 text-sm text-[var(--color-ink)]"
               >
-                <SelectTrigger id="oven_required">
-                  <SelectValue placeholder="Not set" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={OVEN_REQUIRED_NONE}>Not set</SelectItem>
-                  <SelectItem value="true">Yes, oven required</SelectItem>
-                  <SelectItem value="false">No, oven not required</SelectItem>
-                </SelectContent>
-              </Select>
+                <input
+                  id="oven_required"
+                  type="checkbox"
+                  className="mt-0.5 size-4 shrink-0 rounded border border-[var(--color-border)] bg-[var(--color-canvas)] text-[var(--color-accent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-accent)]"
+                  checked={recipe.oven_required === true}
+                  onChange={(e) =>
+                    onExtrasChange({
+                      oven_required: e.target.checked,
+                    })
+                  }
+                />
+                <span>
+                  <span className="font-medium">Oven required</span>
+                  <span className="mt-0.5 block text-xs font-normal text-[var(--color-muted)]">
+                    Off means oven not required (false). On means an oven is required.
+                  </span>
+                </span>
+              </label>
             </div>
             <div className="space-y-1.5">
               <Label>Convection (oven_fan)</Label>

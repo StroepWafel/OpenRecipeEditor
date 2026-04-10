@@ -147,7 +147,7 @@ export default function App() {
           e instanceof Error ? e.message : "Failed to load default example.";
         errors.push(`Example: ${msg}`);
         setEssentials(emptyRecipe());
-        setExtras(null);
+        setExtras({ oven_required: false });
       }
 
       if (!cancelled && errors.length) {
@@ -198,10 +198,10 @@ export default function App() {
 
   const resetToNewRecipe = React.useCallback(() => {
     const e = emptyRecipe();
-    const merged = mergeRecipeForModel(null, e);
+    const merged = mergeRecipeForModel({ oven_required: false }, e);
     setBaselineFingerprint(JSON.stringify(merged));
     setEssentials(e);
-    setExtras(null);
+    setExtras({ oven_required: false });
     setBootstrapError(null);
     setEditorSyncKey((k) => k + 1);
   }, []);
