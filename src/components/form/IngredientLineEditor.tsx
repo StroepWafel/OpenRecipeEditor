@@ -12,6 +12,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import * as React from "react";
+import { INGREDIENT_QUANTITY_KINDS } from "./constants";
 import { MeasurementFieldset } from "./MeasurementFieldset";
 import { useCollapsibleListRow } from "./useCollapsibleListRow";
 
@@ -160,6 +161,7 @@ export function IngredientLineEditor({
               <MeasurementFieldset
                 value={amount}
                 onChange={(m) => patch({ amount: m })}
+                quantityKindOptions={INGREDIENT_QUANTITY_KINDS}
               />
             </div>
 

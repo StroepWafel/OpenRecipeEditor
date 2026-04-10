@@ -6,6 +6,15 @@ export const QUANTITY_KINDS = [
   "duration",
 ] as const;
 
+/**
+ * Ingredient line amounts: same as yield (count, mass, volume)—not temperature or duration.
+ */
+export const INGREDIENT_QUANTITY_KINDS = [
+  "mass",
+  "volume",
+  "count",
+] as const;
+
 export { YIELD_QUANTITY_KINDS } from "@/lib/recipe-document";
 
 /** Normative schema: `metric` for SI units; `us_customary` only for volume (tsp, tbsp, cup). */
