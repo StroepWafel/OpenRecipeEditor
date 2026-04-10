@@ -28,6 +28,7 @@ const KEY_LABELS: Record<string, string> = {
   base_yield: "Base yield",
   ingredients: "Ingredients",
   steps: "Steps",
+  oven_required: "Oven required",
   oven_fan: "Oven fan",
   oven_temp: "Oven temperature",
   oven_time: "Oven time",

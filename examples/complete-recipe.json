@@ -48,6 +48,7 @@
       "step": "Bring the water to a boil in a saucepan."
     }
   ],
+  "oven_required": true,
   "oven_temp": {
     "amount": 180,
     "unit": "C",

@@ -43,6 +43,7 @@ import {
 import * as React from "react";
 
 const FAN_NONE = "__none__";
+const OVEN_REQUIRED_NONE = "__none__";
 const SKILL_NONE = "__none__";
 
 function nonEmptyStringArray(v: unknown): string[] {
@@ -115,6 +116,13 @@ export function RecipeExtrasPanel({
 
   const fanSelectValue = fan || FAN_NONE;
 
+  const ovenRequiredSelectValue =
+    typeof recipe.oven_required === "boolean"
+      ? recipe.oven_required
+        ? "true"
+        : "false"
+      : OVEN_REQUIRED_NONE;
+
   const skillLevel =
     typeof recipe.skill_level === "string" &&
     (SKILL_LEVELS as readonly string[]).includes(recipe.skill_level)
@@ -144,7 +152,12 @@ export function RecipeExtrasPanel({
     const bits: string[] = [];
     if (uuid.trim()) bits.push("UUID");
     if (hasClassificationMetadata) bits.push("Classification");
-    if (fan || isJsonObject(recipe.oven_temp) || isJsonObject(recipe.oven_time))
+    if (
+      fan ||
+      isJsonObject(recipe.oven_temp) ||
+      isJsonObject(recipe.oven_time) ||
+      typeof recipe.oven_required === "boolean"
+    )
       bits.push("Oven");
     if (
       sourceUrl.trim() ||
@@ -160,6 +173,7 @@ export function RecipeExtrasPanel({
     fan,
     recipe.oven_temp,
     recipe.oven_time,
+    recipe.oven_required,
     sourceUrl,
     sourceAuthors.length,
     recipe.source_book,
@@ -581,9 +595,45 @@ export function RecipeExtrasPanel({
           title="Oven"
           icon={<Flame />}
           defaultOpen={false}
-          summary={fan ? fan : "Not set"}
+          summary={
+            [
+              typeof recipe.oven_required === "boolean"
+                ? recipe.oven_required
+                  ? "Oven required"
+                  : "Oven not required"
+                : null,
+              fan ? `Fan ${fan}` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ") || "Not set"
+          }
         >
           <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="oven_required">Oven required (oven_required)</Label>
+              <p className="text-xs text-[var(--color-muted)]">
+                Whether an oven is needed for this recipe. Leave unset if unknown.
+              </p>
+              <Select
+                value={ovenRequiredSelectValue}
+                onValueChange={(v) => {
+                  if (v === OVEN_REQUIRED_NONE) {
+                    onExtrasChange({ oven_required: undefined });
+                  } else {
+                    onExtrasChange({ oven_required: v === "true" });
+                  }
+                }}
+              >
+                <SelectTrigger id="oven_required">
+                  <SelectValue placeholder="Not set" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={OVEN_REQUIRED_NONE}>Not set</SelectItem>
+                  <SelectItem value="true">Yes, oven required</SelectItem>
+                  <SelectItem value="false">No, oven not required</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-1.5">
               <Label>Convection (oven_fan)</Label>
               <Select

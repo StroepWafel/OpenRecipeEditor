@@ -117,6 +117,10 @@
       "description": "Ordered preparation steps.",
       "items": { "$ref": "#/$defs/Step" }
     },
+    "oven_required": {
+      "type": "boolean",
+      "description": "Whether an oven is required to prepare this recipe. If omitted, consumers may infer from oven_temp, oven_time, oven_fan, steps, or equipment."
+    },
     "oven_fan": {
       "type": "string",
       "enum": ["Off", "Low", "High"],
