@@ -13,6 +13,7 @@ import bundledOpenRecipeSchema from "@/schemas/open-recipe.schema.json";
 import {
   finalizeRecipeForExport,
   mergeRecipeForModel,
+  recipeForValidation,
   splitRecipeForEditor,
 } from "@/lib/recipe-export";
 import {
@@ -182,7 +183,7 @@ export default function App() {
         ]);
         return;
       }
-      const ok = validator(doc);
+      const ok = validator(recipeForValidation(doc));
       if (ok) setAjvErrors([]);
       else setAjvErrors(interpretAjvErrors(validator.errors));
     },
