@@ -17,6 +17,7 @@ import {
   defaultIngredient,
   defaultStep,
   isJsonObject,
+  linesFromMultilineInput,
   YIELD_QUANTITY_KINDS,
 } from "@/lib/recipe-document";
 import { MotionConfig, Reorder } from "motion/react";
@@ -169,10 +170,7 @@ export function RecipeForm({
               value={notes.join("\n")}
               onChange={(e) =>
                 set({
-                  notes: e.target.value
-                    .split("\n")
-                    .map((s) => s.trim())
-                    .filter(Boolean),
+                  notes: linesFromMultilineInput(e.target.value),
                 })
               }
               placeholder="One note per line"

@@ -24,6 +24,7 @@ import {
   defaultOvenTemperatureMeasurement,
   defaultOvenTimeMeasurement,
   isJsonObject,
+  linesFromMultilineInput,
   parseOvenFan,
   sourceBookFromUnknown,
   splitVendorExtensionKeys,
@@ -45,15 +46,8 @@ import * as React from "react";
 const FAN_NONE = "__none__";
 const SKILL_NONE = "__none__";
 
-function nonEmptyStringArray(v: unknown): string[] {
-  return asStringArray(v).map((s) => s.trim()).filter(Boolean);
-}
-
-function nonEmptyLinesToArray(text: string): string[] {
-  return text
-    .split("\n")
-    .map((s) => s.trim())
-    .filter(Boolean);
+function hasNonEmptyLine(v: unknown): boolean {
+  return asStringArray(v).some((s) => s.trim().length > 0);
 }
 
 type Props = {
@@ -92,7 +86,7 @@ export function RecipeExtrasPanel({
   );
 
   const sourceUrl = typeof recipe.source_url === "string" ? recipe.source_url : "";
-  const recipeAuthors = nonEmptyStringArray(recipe.recipe_authors);
+  const recipeAuthors = asStringArray(recipe.recipe_authors);
   const sourceAuthors = asStringArray(recipe.source_authors);
   const sb = sourceBookFromUnknown(recipe.source_book);
 
@@ -127,14 +121,14 @@ export function RecipeExtrasPanel({
   ).length;
 
   const hasClassificationMetadata =
-    nonEmptyStringArray(recipe.categories).length > 0 ||
-    nonEmptyStringArray(recipe.cor).length > 0 ||
-    nonEmptyStringArray(recipe.cuisine).length > 0 ||
-    nonEmptyStringArray(recipe.tags).length > 0 ||
-    nonEmptyStringArray(recipe.dietary).length > 0 ||
-    nonEmptyStringArray(recipe.allergens).length > 0 ||
+    hasNonEmptyLine(recipe.categories) ||
+    hasNonEmptyLine(recipe.cor) ||
+    hasNonEmptyLine(recipe.cuisine) ||
+    hasNonEmptyLine(recipe.tags) ||
+    hasNonEmptyLine(recipe.dietary) ||
+    hasNonEmptyLine(recipe.allergens) ||
     normalizeMealTypeArray(recipe.meal_type).length > 0 ||
-    nonEmptyStringArray(recipe.equipment).length > 0 ||
+    hasNonEmptyLine(recipe.equipment) ||
     Boolean(skillLevel) ||
     isJsonObject(recipe.prep_time) ||
     isJsonObject(recipe.cook_time) ||
@@ -258,10 +252,10 @@ export function RecipeExtrasPanel({
                 </p>
                 <Textarea
                   id="meta-categories"
-                  value={nonEmptyStringArray(recipe.categories).join("\n")}
+                  value={asStringArray(recipe.categories).join("\n")}
                   onChange={(e) =>
                     onExtrasChange({
-                      categories: nonEmptyLinesToArray(e.target.value),
+                      categories: linesFromMultilineInput(e.target.value),
                     })
                   }
                   placeholder="sweet"
@@ -276,10 +270,10 @@ export function RecipeExtrasPanel({
                 </p>
                 <Textarea
                   id="meta-cor"
-                  value={nonEmptyStringArray(recipe.cor).join("\n")}
+                  value={asStringArray(recipe.cor).join("\n")}
                   onChange={(e) =>
                     onExtrasChange({
-                      cor: nonEmptyLinesToArray(e.target.value),
+                      cor: linesFromMultilineInput(e.target.value),
                     })
                   }
                   placeholder="United States"
@@ -296,10 +290,10 @@ export function RecipeExtrasPanel({
                 </p>
                 <Textarea
                   id="meta-cuisine"
-                  value={nonEmptyStringArray(recipe.cuisine).join("\n")}
+                  value={asStringArray(recipe.cuisine).join("\n")}
                   onChange={(e) =>
                     onExtrasChange({
-                      cuisine: nonEmptyLinesToArray(e.target.value),
+                      cuisine: linesFromMultilineInput(e.target.value),
                     })
                   }
                   placeholder="American"
@@ -314,10 +308,10 @@ export function RecipeExtrasPanel({
                 </p>
                 <Textarea
                   id="meta-tags"
-                  value={nonEmptyStringArray(recipe.tags).join("\n")}
+                  value={asStringArray(recipe.tags).join("\n")}
                   onChange={(e) =>
                     onExtrasChange({
-                      tags: nonEmptyLinesToArray(e.target.value),
+                      tags: linesFromMultilineInput(e.target.value),
                     })
                   }
                   placeholder="chocolate"
@@ -334,10 +328,10 @@ export function RecipeExtrasPanel({
                 </p>
                 <Textarea
                   id="meta-dietary"
-                  value={nonEmptyStringArray(recipe.dietary).join("\n")}
+                  value={asStringArray(recipe.dietary).join("\n")}
                   onChange={(e) =>
                     onExtrasChange({
-                      dietary: nonEmptyLinesToArray(e.target.value),
+                      dietary: linesFromMultilineInput(e.target.value),
                     })
                   }
                   placeholder="vegetarian"
@@ -352,10 +346,10 @@ export function RecipeExtrasPanel({
                 </p>
                 <Textarea
                   id="meta-allergens"
-                  value={nonEmptyStringArray(recipe.allergens).join("\n")}
+                  value={asStringArray(recipe.allergens).join("\n")}
                   onChange={(e) =>
                     onExtrasChange({
-                      allergens: nonEmptyLinesToArray(e.target.value),
+                      allergens: linesFromMultilineInput(e.target.value),
                     })
                   }
                   placeholder="milk"
@@ -408,10 +402,10 @@ export function RecipeExtrasPanel({
                 </p>
                 <Textarea
                   id="meta-equipment"
-                  value={nonEmptyStringArray(recipe.equipment).join("\n")}
+                  value={asStringArray(recipe.equipment).join("\n")}
                   onChange={(e) =>
                     onExtrasChange({
-                      equipment: nonEmptyLinesToArray(e.target.value),
+                      equipment: linesFromMultilineInput(e.target.value),
                     })
                   }
                   placeholder="oven"
@@ -703,7 +697,7 @@ export function RecipeExtrasPanel({
                 value={recipeAuthors.join("\n")}
                 onChange={(e) =>
                   onExtrasChange({
-                    recipe_authors: nonEmptyLinesToArray(e.target.value),
+                    recipe_authors: linesFromMultilineInput(e.target.value),
                   })
                 }
                 placeholder="One name per line"
@@ -739,10 +733,7 @@ export function RecipeExtrasPanel({
                 value={sourceAuthors.join("\n")}
                 onChange={(e) =>
                   onExtrasChange({
-                    source_authors: e.target.value
-                      .split("\n")
-                      .map((s) => s.trim())
-                      .filter(Boolean),
+                    source_authors: linesFromMultilineInput(e.target.value),
                   })
                 }
                 placeholder="One author per line"

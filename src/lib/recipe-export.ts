@@ -140,6 +140,40 @@ export function mergeRecipeForModel(
  * Values saved to disk: stable id, optional $schema, trim empty notes.
  * Does not remove optional metadata loaded from elsewhere (oven, source, …).
  */
+/** Schema `items.minLength: 1` — drop empty lines only (preserve spaces). */
+const STRING_ARRAY_KEYS_MIN_LENGTH_1 = [
+  "recipe_authors",
+  "categories",
+  "cor",
+  "cuisine",
+  "tags",
+  "dietary",
+  "allergens",
+  "equipment",
+] as const;
+
+function stripEmptyStringsFromMinLengthArrays(obj: Record<string, unknown>): void {
+  for (const key of STRING_ARRAY_KEYS_MIN_LENGTH_1) {
+    const v = obj[key];
+    if (!Array.isArray(v)) continue;
+    const next = (v as unknown[]).filter(
+      (x): x is string => typeof x === "string" && x !== ""
+    );
+    if (next.length === 0) delete obj[key];
+    else obj[key] = next;
+  }
+}
+
+/**
+ * Shallow copy with empty strings removed from `minLength: 1` string arrays only.
+ * Used for live AJV validation so blank lines while typing do not fail the schema.
+ */
+export function recipeForValidation(recipe: Record<string, unknown>): Record<string, unknown> {
+  const out = { ...recipe };
+  stripEmptyStringsFromMinLengthArrays(out);
+  return out;
+}
+
 export function finalizeRecipeForExport(
   recipe: Record<string, unknown>,
   options?: { schemaId?: string | null }
@@ -151,6 +185,7 @@ export function finalizeRecipeForExport(
   if (options?.schemaId) {
     out.$schema = options.schemaId;
   }
+  stripEmptyStringsFromMinLengthArrays(out);
   if (Array.isArray(out.notes) && out.notes.length === 0) {
     delete out.notes;
   }

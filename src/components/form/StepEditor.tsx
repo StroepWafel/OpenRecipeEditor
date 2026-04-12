@@ -6,6 +6,7 @@ import {
   asStringArray,
   defaultStep,
   isJsonObject,
+  linesFromMultilineInput,
 } from "@/lib/recipe-document";
 import { cn } from "@/lib/utils";
 import { ChevronDown, Trash2 } from "lucide-react";
@@ -127,10 +128,7 @@ export function StepEditor({
                 value={notes.join("\n")}
                 onChange={(e) =>
                   patch({
-                    notes: e.target.value
-                      .split("\n")
-                      .map((s) => s.trim())
-                      .filter(Boolean),
+                    notes: linesFromMultilineInput(e.target.value),
                   })
                 }
                 placeholder="One per line"

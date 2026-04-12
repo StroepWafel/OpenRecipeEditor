@@ -17,6 +17,13 @@ export function asStringArray(v: unknown): string[] {
   return v.map((x) => (typeof x === "string" ? x : String(x)));
 }
 
+/**
+ * Multiline textarea ↔ string[] round-trip: preserves internal spaces and blank lines.
+ */
+export function linesFromMultilineInput(text: string): string[] {
+  return text.split("\n");
+}
+
 export function asMeasurementArray(v: unknown): Record<string, unknown>[] {
   if (!Array.isArray(v)) return [];
   return v.filter(isJsonObject);
@@ -295,14 +302,8 @@ export function buildSourceBook(
   notesLines: string,
   extensionJson: string
 ): Record<string, unknown> | null {
-  const authors = authorsLines
-    .split("\n")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const notes = notesLines
-    .split("\n")
-    .map((s) => s.trim())
-    .filter(Boolean);
+  const authors = authorsLines.split("\n");
+  const notes = notesLines.split("\n");
   const out: Record<string, unknown> = {};
   if (title.trim()) out.title = title.trim();
   if (isbn.trim()) out.isbn = isbn.trim();

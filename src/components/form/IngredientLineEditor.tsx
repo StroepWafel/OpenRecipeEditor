@@ -8,6 +8,7 @@ import {
   defaultIngredient,
   defaultMeasurement,
   isJsonObject,
+  linesFromMultilineInput,
 } from "@/lib/recipe-document";
 import { cn } from "@/lib/utils";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
@@ -171,10 +172,7 @@ export function IngredientLineEditor({
                 value={processing.join("\n")}
                 onChange={(e) =>
                   patch({
-                    processing: e.target.value
-                      .split("\n")
-                      .map((s) => s.trim())
-                      .filter(Boolean),
+                    processing: linesFromMultilineInput(e.target.value),
                   })
                 }
                 placeholder="One per line, e.g. minced"
@@ -188,10 +186,7 @@ export function IngredientLineEditor({
                 value={notes.join("\n")}
                 onChange={(e) =>
                   patch({
-                    notes: e.target.value
-                      .split("\n")
-                      .map((s) => s.trim())
-                      .filter(Boolean),
+                    notes: linesFromMultilineInput(e.target.value),
                   })
                 }
                 placeholder="One per line"
