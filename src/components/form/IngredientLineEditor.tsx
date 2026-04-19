@@ -48,6 +48,10 @@ function lineOrDefault(v: unknown): Record<string, unknown> {
   if (!isJsonObject(base.amount)) {
     base.amount = defaultMeasurement();
   }
+  const aa = base.amount_alternates;
+  if (Array.isArray(aa)) {
+    base.amount_alternates = aa.filter(isJsonObject);
+  }
   return base;
 }
 
@@ -68,12 +72,20 @@ export function IngredientLineEditor({
   const amount = isJsonObject(line.amount)
     ? line.amount
     : defaultMeasurement();
+  const alternatesRaw = line.amount_alternates;
+  const alternates: Record<string, unknown>[] = Array.isArray(alternatesRaw)
+    ? alternatesRaw.filter(isJsonObject)
+    : [];
   const processing = asStringArray(line.processing);
   const notes = asStringArray(line.notes);
   const usda = typeof line.usda_num === "string" ? line.usda_num : "";
 
   const patch = (next: Record<string, unknown>) => {
     onChange({ ...line, ...next });
+  };
+
+  const replaceLine = (next: Record<string, unknown>) => {
+    onChange(next);
   };
 
   const subsRaw = line.substitutions;
@@ -163,7 +175,70 @@ export function IngredientLineEditor({
                 value={amount}
                 onChange={(m) => patch({ amount: m })}
                 quantityKindOptions={INGREDIENT_QUANTITY_KINDS}
+                ingredientCountUnits
               />
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="text-xs font-medium text-[var(--color-muted)]">
+                  Alternate amounts (optional)
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() =>
+                    patch({
+                      amount_alternates: [...alternates, defaultMeasurement()],
+                    })
+                  }
+                >
+                  <Plus className="size-4" />
+                  Add alternate
+                </Button>
+              </div>
+              <p className="text-[11px] text-[var(--color-muted)]">
+                Equivalent measures (e.g. cups vs millilitres). Each is a full amount;
+                scaling uses the primary amount above.
+              </p>
+              {alternates.map((alt, ai) => (
+                <div key={ai} className="space-y-2 rounded-md border border-[var(--color-border)]/80 bg-stone-50/40 p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-medium text-[var(--color-muted)]">
+                      Alternate {ai + 1}
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 shrink-0 text-stone-500 hover:text-red-700"
+                      onClick={() => {
+                        const copy = alternates.filter((_, j) => j !== ai);
+                        if (copy.length === 0) {
+                          const next = { ...line };
+                          delete next.amount_alternates;
+                          replaceLine(next);
+                        } else {
+                          patch({ amount_alternates: copy });
+                        }
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                  <MeasurementFieldset
+                    value={alt}
+                    onChange={(m) => {
+                      const copy = [...alternates];
+                      copy[ai] = m;
+                      patch({ amount_alternates: copy });
+                    }}
+                    quantityKindOptions={INGREDIENT_QUANTITY_KINDS}
+                    ingredientCountUnits
+                  />
+                </div>
+              ))}
             </div>
 
             <div className="space-y-1.5">

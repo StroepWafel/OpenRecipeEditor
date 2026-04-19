@@ -1,4 +1,5 @@
 import {
+  coerceMeasurementCountUnit,
   resolveMeasurementUnit,
   US_VOLUME_TO_ML,
 } from "@/lib/measurement-units";
@@ -116,9 +117,7 @@ export function normalizeMeasurementMetric(
 
   const unitOut =
     qk === "count"
-      ? unit.trim() === ""
-        ? "each"
-        : unit.trim()
+      ? coerceMeasurementCountUnit(unit)
       : resolveMeasurementUnit(qk, unit, "metric");
 
   return {
@@ -138,8 +137,37 @@ export function normalizeMeasurementMetric(
 export function normalizeYieldMeasurement(
   m: Record<string, unknown>
 ): Record<string, unknown> {
-  if (isYieldQuantityKind(m.quantity_kind)) {
+  const qk = typeof m.quantity_kind === "string" ? m.quantity_kind : "";
+  if (qk === "mass" || qk === "volume") {
     return normalizeMeasurementMetric({ ...m });
+  }
+  if (qk === "count") {
+    const d = defaultBaseYield();
+    const rawAmount = m.amount;
+    const amount =
+      typeof rawAmount === "number" && Number.isFinite(rawAmount)
+        ? rawAmount
+        : typeof rawAmount === "string"
+          ? parseFloat(rawAmount)
+          : NaN;
+    let unit = typeof m.unit === "string" ? m.unit : "";
+    const trimmed = unit.trim();
+    return {
+      ...m,
+      amount: Number.isFinite(amount)
+        ? amount
+        : typeof d.amount === "number"
+          ? d.amount
+          : 1,
+      unit:
+        trimmed === ""
+          ? typeof d.unit === "string"
+            ? d.unit
+            : "portion"
+          : trimmed,
+      quantity_kind: "count",
+      unit_system: "metric",
+    };
   }
   const d = defaultBaseYield();
   const rawAmount = m.amount;
@@ -149,15 +177,19 @@ export function normalizeYieldMeasurement(
       : typeof rawAmount === "string"
         ? parseFloat(rawAmount)
         : NaN;
-  return normalizeMeasurementMetric({
+  return {
     ...d,
+    ...m,
     amount: Number.isFinite(amount) ? amount : d.amount,
     unit:
       typeof m.unit === "string" && m.unit.trim() !== ""
-        ? m.unit
-        : d.unit,
+        ? m.unit.trim()
+        : typeof d.unit === "string"
+          ? d.unit
+          : "portion",
     quantity_kind: "count",
-  });
+    unit_system: "metric",
+  };
 }
 
 export function emptyRecipe(): Record<string, unknown> {

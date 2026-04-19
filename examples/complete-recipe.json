@@ -40,7 +40,15 @@
         "unit": "ml",
         "quantity_kind": "volume",
         "unit_system": "metric"
-      }
+      },
+      "amount_alternates": [
+        {
+          "amount": 2,
+          "unit": "cup",
+          "quantity_kind": "volume",
+          "unit_system": "us_customary"
+        }
+      ]
     }
   ],
   "steps": [

@@ -1,8 +1,45 @@
 /**
+ * Allowed `unit` codes for `quantity_kind` **count** on a normative `Measurement`
+ * (ingredient amounts, alternates, oven metadata—not `YieldMeasurement` count output).
+ */
+export const MEASUREMENT_COUNT_UNIT_CODES = [
+  "each",
+  "dozen",
+  "serving",
+  "servings",
+  "portion",
+  "portions",
+  "cookie",
+  "cookies",
+  "slice",
+  "slices",
+  "egg",
+  "eggs",
+  "batch",
+  "batches",
+  "loaf",
+  "loaves",
+  "muffin",
+  "muffins",
+] as const;
+
+export function isMeasurementCountUnitCode(unit: string): boolean {
+  return (MEASUREMENT_COUNT_UNIT_CODES as readonly string[]).includes(unit);
+}
+
+/** Map legacy or unknown count labels to a schema `Measurement` count unit. */
+export function coerceMeasurementCountUnit(unit: string): string {
+  const t = unit.trim();
+  if (t === "") return "each";
+  if (isMeasurementCountUnitCode(t)) return t;
+  return "each";
+}
+
+/**
  * Allowed `unit` codes per `quantity_kind` (and for volume, `unit_system`).
- * Open Recipe Standard: mass, count, temperature, duration are metric; volume may be
+ * Open Recipe Standard: mass, temperature, duration are metric; volume may be
  * metric (ml, cl, L) or US customary (tsp, tbsp, cup).
- * `quantity_kind` **count** is not restricted here: `unit` is any non-empty string in the schema.
+ * For **count** on `Measurement`, see `MEASUREMENT_COUNT_UNIT_CODES`; yield-only count uses a free-form label.
  */
 const METRIC_BY_KIND: Record<string, readonly string[]> = {
   mass: ["mg", "g", "kg"],
@@ -16,13 +53,16 @@ const US_VOLUME_UNITS = ["tsp", "tbsp", "cup"] as const;
 /**
  * Allowed unit codes for the given `quantity_kind`.
  * For **volume**, pass `unit_system` (`metric` or `us_customary`).
- * Returns an empty list for **count** (free-form unit label).
+ * Returns an empty list for **count** unless `measurementCountUnits` is true (normative `Measurement` enum).
  */
 export function unitsForQuantityKind(
   quantityKind: string,
-  unitSystem: "metric" | "us_customary" = "metric"
+  unitSystem: "metric" | "us_customary" = "metric",
+  measurementCountUnits = false
 ): string[] {
-  if (quantityKind === "count") return [];
+  if (quantityKind === "count") {
+    return measurementCountUnits ? [...MEASUREMENT_COUNT_UNIT_CODES] : [];
+  }
   if (quantityKind === "volume") {
     if (unitSystem === "us_customary") {
       return [...US_VOLUME_UNITS];

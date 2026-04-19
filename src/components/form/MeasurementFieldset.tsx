@@ -10,6 +10,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  coerceMeasurementCountUnit,
+  MEASUREMENT_COUNT_UNIT_CODES,
   resolveMeasurementUnit,
   unitsForQuantityKind,
 } from "@/lib/measurement-units";
@@ -30,6 +32,11 @@ type Props = {
    * count, mass, volume per `YieldMeasurement` — not temperature or duration).
    */
   quantityKindOptions?: readonly string[];
+  /**
+   * When true with quantity kind count, `unit` uses the normative `Measurement` enum
+   * (ingredient lines). When false, count `unit` is free text (`YieldMeasurement` output).
+   */
+  ingredientCountUnits?: boolean;
 };
 
 export function MeasurementFieldset({
@@ -37,6 +44,7 @@ export function MeasurementFieldset({
   onChange,
   label,
   quantityKindOptions,
+  ingredientCountUnits = false,
 }: Props) {
   const uid = React.useId();
   const v = isJsonObject(value) ? value : defaultMeasurement();
@@ -58,8 +66,12 @@ export function MeasurementFieldset({
   const volumeSystem: "metric" | "us_customary" =
     us === "us_customary" ? "us_customary" : "metric";
 
+  const countUnitResolved = ingredientCountUnits
+    ? coerceMeasurementCountUnit(unit)
+    : unit;
+
   const resolvedUnit = isCount
-    ? unit
+    ? countUnitResolved
     : resolveMeasurementUnit(
         resolvedKind,
         unit,
@@ -67,12 +79,14 @@ export function MeasurementFieldset({
       );
 
   const allowedUnits = React.useMemo(() => {
-    if (isCount) return [];
+    if (isCount) {
+      return ingredientCountUnits ? [...MEASUREMENT_COUNT_UNIT_CODES] : [];
+    }
     if (isVolume) {
       return unitsForQuantityKind("volume", volumeSystem);
     }
     return unitsForQuantityKind(resolvedKind, "metric");
-  }, [isCount, isVolume, resolvedKind, volumeSystem]);
+  }, [isCount, isVolume, ingredientCountUnits, resolvedKind, volumeSystem]);
 
   const patch = React.useCallback(
     (patch: Record<string, unknown>) => {
@@ -86,6 +100,13 @@ export function MeasurementFieldset({
       patch({ quantity_kind: resolvedKind });
     }
   }, [qk, resolvedKind, patch]);
+
+  React.useEffect(() => {
+    if (!isCount || !ingredientCountUnits) return;
+    if (countUnitResolved !== unit) {
+      patch({ unit: countUnitResolved, unit_system: "metric" });
+    }
+  }, [isCount, ingredientCountUnits, countUnitResolved, unit, patch]);
 
   React.useEffect(() => {
     if (isCount) return;
@@ -196,13 +217,33 @@ export function MeasurementFieldset({
       <div className="space-y-1.5">
         <Label htmlFor={`${uid}-unit`}>Unit</Label>
         {isCount ? (
-          <Input
-            id={`${uid}-unit`}
-            value={unit}
-            onChange={(e) => patch({ unit: e.target.value })}
-            placeholder="e.g. cookies, servings, each…"
-            className="font-mono text-sm"
-          />
+          ingredientCountUnits ? (
+            <Select
+              value={resolvedUnit}
+              onValueChange={(val) =>
+                patch({ unit: val, unit_system: "metric" })
+              }
+            >
+              <SelectTrigger id={`${uid}-unit`}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-[min(24rem,70vh)]">
+                {allowedUnits.map((u) => (
+                  <SelectItem key={u} value={u}>
+                    {u}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Input
+              id={`${uid}-unit`}
+              value={unit}
+              onChange={(e) => patch({ unit: e.target.value })}
+              placeholder="e.g. cookies, servings, each…"
+              className="font-mono text-sm"
+            />
+          )
         ) : (
           <Select
             value={resolvedUnit}

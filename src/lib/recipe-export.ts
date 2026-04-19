@@ -37,6 +37,15 @@ function migrateIngredientLine(line: Record<string, unknown>): Record<string, un
     out.amount = normalizeMeasurementMetric(out.amount);
   }
 
+  const alt = out.amount_alternates;
+  if (Array.isArray(alt)) {
+    const normalized = alt
+      .filter(isJsonObject)
+      .map((a) => normalizeMeasurementMetric(a));
+    if (normalized.length === 0) delete out.amount_alternates;
+    else out.amount_alternates = normalized;
+  }
+
   const subs = out.substitutions;
   if (Array.isArray(subs)) {
     out.substitutions = subs.map((s) =>
